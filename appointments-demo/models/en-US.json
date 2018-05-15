@@ -1,0 +1,716 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "dental office",
+            "intents": [
+                {
+                    "name": "AMAZON.FallbackIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "BookAppointmentInt",
+                    "slots": [
+                        {
+                            "name": "SEL_BRANCH",
+                            "type": "DEMO_DENTIST_OFFICES",
+                            "samples": [
+                                "select {SEL_BRANCH}",
+                                "book on {SEL_BRANCH}",
+                                "In {SEL_BRANCH}",
+                                "I would like {SEL_BRANCH} branch",
+                                "use the {SEL_BRANCH} office",
+                                "set location to {SEL_BRANCH} ",
+                                "{SEL_BRANCH} office",
+                                "{SEL_BRANCH} offices",
+                                "{SEL_BRANCH} headquarters",
+                                "{SEL_BRANCH}"
+                            ]
+                        },
+                        {
+                            "name": "SEL_SERVICE",
+                            "type": "DEMO_DENTIST_SERVICES",
+                            "samples": [
+                                "select {SEL_SERVICE}",
+                                "book the {SEL_SERVICE} service",
+                                "{SEL_SERVICE} appointment",
+                                "for {SEL_SERVICE}",
+                                "I would like the {SEL_SERVICE} service",
+                                "use the {SEL_SERVICE}",
+                                "{SEL_SERVICE} procedure",
+                                "{SEL_SERVICE}"
+                            ]
+                        },
+                        {
+                            "name": "SEL_ASSESSOR",
+                            "type": "DEMO_DENTIS_ASSESSORS",
+                            "samples": [
+                                "select {SEL_ASSESSOR}",
+                                "please select {SEL_ASSESSOR}",
+                                "{SEL_ASSESSOR} would be ideal",
+                                "{SEL_ASSESSOR} would be nice",
+                                "I prefer {SEL_ASSESSOR}",
+                                "{SEL_ASSESSOR}",
+                                "Book with {SEL_ASSESSOR}",
+                                "Let's go with {SEL_ASSESSOR}",
+                                "I would like to book with {SEL_ASSESSOR}"
+                            ]
+                        },
+                        {
+                            "name": "SEL_DATE",
+                            "type": "AMAZON.DATE",
+                            "samples": [
+                                "{SEL_TIME}",
+                                "{SEL_TIME} on {SEL_DATE}",
+                                "I want to book for {SEL_DATE} at {SEL_TIME}",
+                                "I would like to book on {SEL_DATE} at {SEL_TIME}",
+                                "select {SEL_DATE} at {SEL_TIME}",
+                                "use {SEL_DATE} at {SEL_TIME}",
+                                "please schedule it for {SEL_DATE} at {SEL_TIME}",
+                                "{SEL_DATE} at {SEL_TIME}",
+                                "please schedule it for {SEL_DATE}",
+                                "use {SEL_DATE}",
+                                "select {SEL_DATE} ",
+                                "I would like to book on {SEL_DATE}",
+                                "I want to book for {SEL_DATE}",
+                                "{SEL_DATE}"
+                            ]
+                        },
+                        {
+                            "name": "SEL_TIME",
+                            "type": "AMAZON.TIME",
+                            "samples": [
+                                "{SEL_TIME}",
+                                "{SEL_TIME} on {SEL_DATE}",
+                                "I want to book for {SEL_DATE} at {SEL_TIME}",
+                                "I would like to book on {SEL_DATE} at {SEL_TIME}",
+                                "select {SEL_DATE} at {SEL_TIME}",
+                                "use {SEL_DATE} at {SEL_TIME}",
+                                "please schedule it for {SEL_DATE} at {SEL_TIME}",
+                                "{SEL_DATE} at {SEL_TIME}",
+                                "please schedule it for {SEL_DATE}",
+                                "use {SEL_DATE}",
+                                "select {SEL_DATE} ",
+                                "I would like to book on {SEL_TIME}",
+                                "I want to book at {SEL_TIME} on {SEL_DATE}",
+                                "{SEL_DATE}"
+                            ]
+                        },
+                        {
+                            "name": "TO_FIX",
+                            "type": "APPOINTS_SLOT_TYPES"
+                        }
+                    ],
+                    "samples": [
+                        "Book an {SEL_SERVICE} appointment with {SEL_ASSESSOR} {SEL_DATE} at {SEL_TIME} on the {SEL_BRANCH} office",
+                        "I want an appointment for {SEL_TIME}",
+                        "Book an appointment for {SEL_DATE}",
+                        "Book a {SEL_SERVICE} appointment on {SEL_BRANCH} with {SEL_ASSESSOR} ",
+                        "I would like an appointment with {SEL_ASSESSOR} at {SEL_TIME}",
+                        "I want an appointment for {SEL_DATE} at {SEL_TIME}",
+                        "I want an appointment for {SEL_DATE}",
+                        "Book a {SEL_SERVICE} appointment on {SEL_BRANCH}",
+                        "Book an appointment at {SEL_TIME} with {SEL_ASSESSOR}",
+                        "Book an appointment at {SEL_TIME}",
+                        "Book an appointment with {SEL_ASSESSOR} {SEL_DATE}",
+                        "Book an appointment with {SEL_ASSESSOR} ",
+                        "Book an appointment",
+                        "Select Branch",
+                        "Select {SEL_BRANCH} as Branch",
+                        "Use {SEL_BRANCH} Branch",
+                        "{SEL_BRANCH} Branch",
+                        "Branch {SEL_BRANCH}",
+                        "Book an appointment on {SEL_BRANCH}",
+                        "Set location to {SEL_BRANCH}",
+                        "Book an appointment for {SEL_SERVICE} on {SEL_BRANCH}",
+                        "I would like to schedule a {SEL_SERVICE} appointment",
+                        "I would like a {SEL_SERVICE} appointment",
+                        "I'm looking for a {SEL_SERVICE} appointment",
+                        "Schedule a {SEL_SERVICE} appointment",
+                        "Book an appointment for {SEL_SERVICE}",
+                        "Book a {SEL_SERVICE} appointment"
+                    ]
+                },
+                {
+                    "name": "BranchListingIntent",
+                    "slots": [],
+                    "samples": [
+                        "What are the available branches",
+                        "What branches do you have",
+                        "What branches there are",
+                        "What branches do you provide",
+                        "Available branch offices",
+                        "What are the branches",
+                        "What are the Available locations",
+                        "What are the available offices",
+                        "Where are you located"
+                    ]
+                },
+                {
+                    "name": "ServiceListingIntent",
+                    "slots": [
+                        {
+                            "name": "SEL_BRANCH",
+                            "type": "DEMO_DENTIST_OFFICES"
+                        }
+                    ],
+                    "samples": [
+                        "What are the available services",
+                        "What services do you have",
+                        "What services there are",
+                        "What services do you provide",
+                        "Available services",
+                        "What are the services",
+                        "Where are you located",
+                        "What services do you have on {SEL_BRANCH}",
+                        "What services there are on {SEL_BRANCH}",
+                        "What services do you provide on {SEL_BRANCH}",
+                        "Available services on {SEL_BRANCH}",
+                        "What are the services on {SEL_BRANCH}",
+                        "Where are you located on {SEL_BRANCH}"
+                    ]
+                },
+                {
+                    "name": "AssessorListingIntent",
+                    "slots": [],
+                    "samples": [
+                        "Who is available to assist me",
+                        "What assesors are available",
+                        "Who is available to help me",
+                        "Assessors available",
+                        "Who is available",
+                        "Who can assist me",
+                        "Consultants available",
+                        "Doctors available",
+                        "What assessors are available"
+                    ]
+                },
+                {
+                    "name": "NextAvailableDateIntent",
+                    "slots": [],
+                    "samples": [
+                        "next available appointment",
+                        "give me the next available date",
+                        "What is the next available date"
+                    ]
+                }
+            ],
+            "types": [
+                {
+                    "name": "DEMO_DENTIST_OFFICES",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "Catolica Hospital"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Cima Hospital"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Metropolitan Hospital"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Biblica Hospital"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Santa Rita Clinic"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Unibe Clinic"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "DEMO_DENTIST_SERVICES",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "Emergency"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Cleaning"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "GENERAL"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Prosthodontics"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Cleanings & Prevention"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Exams & Cleanings"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Sealants"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Dental Hygiene"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Fluoride Treatment"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Periodontal Treatment"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Oral Cancer Screening"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Restoring Teeth"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Dentures / Partial Dentures"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Bridges"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Crowns"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Inlay & Onlay Restorations"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Composite Fillings"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Cosmetic Dentistry"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Bonding"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Veneers"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Teeth Whitening (One Hour & Trays)"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Dental Implants"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Invisalign"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Routine Tooth Extractions"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Root Canal Therapy"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Other Services"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Emergency Services"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Dentistry For Kids"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "TMD / TMJ Disorders"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Custom Sports Mouthguards"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "DEMO_DENTIS_ASSESSORS",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "Dr. Miranda"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Dr. Strange"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Dr. Oz"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Dr. Robert"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Dr. Lopez",
+                                "synonyms": [
+                                    "Dr. John",
+                                    "John Lopez"
+                                ]
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Dr. Meza",
+                                "synonyms": [
+                                    "Dr. Andrés Meza ",
+                                    "Andrés Meza"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "APPOINTS_SLOT_TYPES",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "Time"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Date"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Assessor",
+                                "synonyms": [
+                                    "Consultant",
+                                    "associative",
+                                    "helper",
+                                    "Dr.",
+                                    "Doctor"
+                                ]
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Service",
+                                "synonyms": [
+                                    "requirement",
+                                    "procedure"
+                                ]
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Branch",
+                                "synonyms": [
+                                    "office",
+                                    "location"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "dialog": {
+            "intents": [
+                {
+                    "name": "BookAppointmentInt",
+                    "confirmationRequired": false,
+                    "prompts": {},
+                    "slots": [
+                        {
+                            "name": "SEL_BRANCH",
+                            "type": "DEMO_DENTIST_OFFICES",
+                            "confirmationRequired": true,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "confirmation": "Confirm.Slot.573524258740.1425416291217",
+                                "elicitation": "Elicit.Slot.573524258740.1425416291217"
+                            }
+                        },
+                        {
+                            "name": "SEL_SERVICE",
+                            "type": "DEMO_DENTIST_SERVICES",
+                            "confirmationRequired": true,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "confirmation": "Confirm.Slot.236945606378.750900687671",
+                                "elicitation": "Elicit.Slot.660216435305.1107748499164"
+                            }
+                        },
+                        {
+                            "name": "SEL_ASSESSOR",
+                            "type": "DEMO_DENTIS_ASSESSORS",
+                            "confirmationRequired": true,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "confirmation": "Confirm.Slot.236945606378.368767403906",
+                                "elicitation": "Elicit.Slot.236945606378.368767403906"
+                            }
+                        },
+                        {
+                            "name": "SEL_DATE",
+                            "type": "AMAZON.DATE",
+                            "confirmationRequired": true,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "confirmation": "Confirm.Slot.236945606378.954709700752",
+                                "elicitation": "Elicit.Slot.236945606378.954709700752"
+                            }
+                        },
+                        {
+                            "name": "SEL_TIME",
+                            "type": "AMAZON.TIME",
+                            "confirmationRequired": true,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "confirmation": "Confirm.Slot.236945606378.1181602008180",
+                                "elicitation": "Elicit.Slot.236945606378.1181602008180"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "prompts": [
+            {
+                "id": "Elicit.Slot.573524258740.1425416291217",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "Where would you like to book your appointment?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "In what office would you like to book your appointment?"
+                    }
+                ]
+            },
+            {
+                "id": "Confirm.Slot.573524258740.1425416291217",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "I heard {SEL_BRANCH} office, is that correct?"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.660216435305.1107748499164",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "What service would like to book with {SEL_ASSESSOR} on {SEL_BRANCH} ?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "What service would you like to book with {SEL_ASSESSOR} ?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "What service would you like to book?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "What service would you like to book on {SEL_BRANCH} ?"
+                    }
+                ]
+            },
+            {
+                "id": "Confirm.Slot.236945606378.750900687671",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "You want the {SEL_SERVICE} service, is that correct?"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.236945606378.368767403906",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "Who would you like to book with?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Who would you like to help you on your {SEL_SERVICE} service appointment?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Do you have someone in mind for your {SEL_SERVICE} service appointment?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Who would you like to assist you today?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Who would you like to assist you?"
+                    }
+                ]
+            },
+            {
+                "id": "Confirm.Slot.236945606378.368767403906",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "I heard you'll like to book with {SEL_ASSESSOR} , is that correct?"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.236945606378.954709700752",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "Any particular date for this appointment?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "What is your date preference for this appointment?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "On what date would you like to book?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "When would you like to book ?"
+                    }
+                ]
+            },
+            {
+                "id": "Confirm.Slot.236945606378.954709700752",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "Does booking for {SEL_DATE} sounds good ?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "I heard {SEL_DATE} at {SEL_TIME} , is that correct?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Is booking for {SEL_DATE} correct?"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.236945606378.1181602008180",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "Any particular time for this appointment?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "What is your time preference for this appointment?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "At what time would you like to book?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "When would you like to book ?"
+                    }
+                ]
+            },
+            {
+                "id": "Confirm.Slot.236945606378.1181602008180",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "Does booking at {SEL_TIME} sounds good ?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "I heard at {SEL_TIME} on {SEL_DATE}, is that correct?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Is booking at {SEL_TIME} correct?"
+                    }
+                ]
+            }
+        ]
+    }
+}

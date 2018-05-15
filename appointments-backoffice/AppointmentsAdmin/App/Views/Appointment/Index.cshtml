@@ -1,0 +1,129 @@
+@model IEnumerable<App.Domain.AppointmentModel>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h2> Model Configuration</h2>
+
+
+
+
+@section Scripts {
+<script type="text/javascript">
+
+        $(document).ready(function(){
+            $.ajax({
+            url: "@Url.Action("GetConfig", "Appointment")",
+            type: "GET",
+            dataType: "json",
+            success: function(result) { $('#current').text(result); },
+            error: function(error) { alert(error); }
+            })
+        });
+
+        $("#sortByList").change(function() {
+        $.ajax({
+            url: "@Url.Action("UpdateForm", "Appointment")",
+            type: "POST",
+            data: { 'conf': $("#sortByList").val() },
+            dataType: "json",
+            success: function(result) { $('#current').text(result); },
+            error: function(error) { alert(error); }
+            })
+
+            });
+</script>
+
+ }
+
+  <br />
+            <b> Select a new config:</b>
+            <br />
+            <select id="sortByList">
+                <option value="S,S,S">DS, TS, AS</option>
+                <option value="S,S,G">DS, TS, AG</option>
+                <option value="S,S,N">DS, TS, AN</option>
+                <option value="S,G,S">DS, TG, AS</option>
+                <option value="S,G,G">DS, TG, AG</option>
+                <option value="S,G,N">DS, TG, AN</option>
+                <option value="S,N,S">DS, TN, AS</option>
+                <option value="S,N,G">DS, TN, AG</option>
+                <option value="S,N,N">DS, TN, AN</option>
+                <option value="G,S,S">DG, TS, AS</option>
+                <option value="G,S,G">DG, TS, AG</option>
+                <option value="G,S,N">DG, TS, AN</option>
+                <option value="G,G,S">DG, TG, AS</option>
+                <option value="G,G,G">DG, TG, AG</option>
+                <option value="G,G,N">DG, TG, AN</option>
+                <option value="G,N,S">DG, TN, AS</option>
+                <option value="G,N,G">DG, TN, AG</option>
+                <option value="G,N,N">DG, TN, AN</option>
+            </select>
+            <br />
+            <b> Current Config:</b>
+            <br />
+            <label id="current"></label>
+
+
+            <h2>Appointments list</h2>
+
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th width="50px">
+                            @Html.DisplayNameFor(model => model.Id)
+                        </th>
+                        <th width="200px">
+                            @Html.DisplayNameFor(model => model.Branch)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Service)
+                        </th>
+                        <th width="200px">
+                            @Html.DisplayNameFor(model => model.Assessor)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Date)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.StartTime)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.EndTime)
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Id)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Branch)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Service)
+                            </td>
+
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Assessor)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Date)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.StartTime)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.EndTime)
+                            </td>
+
+                        </tr>
+                    }
+                </tbody>
+            </table>

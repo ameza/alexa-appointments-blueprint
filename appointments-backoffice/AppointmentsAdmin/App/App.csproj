@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.0" />
+    <PackageReference Include="MySql.Data" Version="8.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="Views\BlackList\Create.cshtml" />
+    <Content Remove="Views\BlackList\Delete.cshtml" />
+    <Content Remove="Views\Appointments\Create.cshtml" />
+    <Content Remove="Views\Appointments\Delete.cshtml" />
+    <Content Remove="Views\Appointments\Edit.cshtml" />
+  </ItemGroup>
+</Project>
