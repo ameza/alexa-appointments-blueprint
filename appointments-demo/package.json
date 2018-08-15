@@ -64,6 +64,6 @@
     "start": "node ./node_modules/bespoken-tools/bin/bst-proxy.js lambda index.js",
     "build": "rm -rf ./dist & tsc -w",
     "predeploy": "rm -rf ./dist & tsc",
-    "deploy": "node ./node_modules/bespoken-tools/bin/bst-deploy.js lambda . --lambdaName appointments"
+    "deploy": "node ./node_modules/bespoken-tools/bin/bst-deploy.js lambda . --lambdaName appointments  --verbose"
   }
 }

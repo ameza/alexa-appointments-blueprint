@@ -81,7 +81,7 @@ class AppointmentsController extends IntentController {
         const assessorText = (config.assessorConfig === "G" || config.assessorConfig === "N") ? "" : `Assessor`;
         const dateText = (config.dateConfig === "G" || config.dateConfig === "N") ? "" : `Date`;
         const timeText = (config.timeConfig === "G" || config.timeConfig === "N") ? "" : `Time`;
-        console.info(`pregunto con ${intentObj.slots.TO_FIX.value}`)
+        console.info(`pregunto con ${intentObj.slots.TO_FIX.value}`);
         const elicit: Elicit = <Elicit>{
             slotToElicit: "TO_FIX",
             speechOutput: `What part of the appointment would you like to change: Location, ${timeText}, ${assessorText}, ${dateText} or Service ?`,
@@ -166,14 +166,20 @@ class AppointmentsController extends IntentController {
     }
 
     handleBranchSlotConfirmation(intentObj: Alexa.Intent): void {
-        if (intentObj.slots.SEL_BRANCH.confirmationStatus === "DENIED") {
-            this.branchElicit(intentObj, true, false);
-        } else {
-            // Slot value is not confirmed
-            const slotToConfirm = "SEL_BRANCH";
-            const speechOutput = `I heard you would like to book in our ${intentObj.slots.SEL_BRANCH.value} office, is that correct?`;
-            const repromptSpeech = speechOutput;
-            this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech);
+        switch (intentObj.slots.SEL_BRANCH.confirmationStatus) {
+            case "DENIED":
+                this.branchElicit(intentObj, true, false);
+                break;
+            case "CONFIRMED":
+                console.info("SAVING CONFIRMED");
+                this.handler.attributes["temp_" + intentObj.name] = intentObj;
+                break;
+            default:
+                // Slot value is not confirmed
+                const slotToConfirm = "SEL_BRANCH";
+                const speechOutput = `I heard you would like to book in our ${intentObj.slots.SEL_BRANCH.value} office, is that correct?`;
+                const repromptSpeech = speechOutput;
+                this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech);
         }
     }
 
@@ -594,8 +600,11 @@ class AppointmentsController extends IntentController {
 
 
     async book(): Promise<void> {
-        const request: Alexa.IntentRequest = fakeDialogState(this.handler.event.request);
+
+        const request: Alexa.IntentRequest = this.handler.event.request; // = fakeDialogState(this.handler.event.request);
         const intentObj = request.intent;
+
+        this.delegateSlotCollection(request);
 
         await this.checkClean(intentObj);
 
@@ -614,13 +623,50 @@ class AppointmentsController extends IntentController {
         } else if (intentObj.slots.SEL_TIME.confirmationStatus !== "CONFIRMED") {
             this.handleTimeMatch(intentObj);
         } else {
+            request.dialogState = "COMPLETED";
             this.handleBookIntentConfirmation(intentObj);
         }
     }
 
+    haveConfirmedSlots(intentObj: Alexa.Intent): Boolean {
+       Object.keys(intentObj.slots).forEach(currentSlot => {
+           if (intentObj.slots[currentSlot].confirmationStatus === "CONFIRMED") {
+               return true;
+           }
+       });
+       return false;
+    }
+    delegateSlotCollection(request: Alexa.IntentRequest): void {
+
+        let intentObj = request.intent;
+        console.info("State: " + request.dialogState);
+        // We only need to restore state if all the slots are unconfirmed
+        if (request.dialogState === "STARTED" && this.handler.attributes["temp_" + request.intent.name]) {
+                console.info("Starting Recovery");
+                let tempSlots = this.handler.attributes["temp_" + request.intent.name].slots;
+
+                Object.keys(tempSlots).forEach(currentSlot => {
+                    if (tempSlots[currentSlot].value) {
+                        request.intent.slots[currentSlot] = tempSlots[currentSlot];
+                        request.intent.slots[currentSlot].confirmationStatus = tempSlots[currentSlot].confirmationStatus;
+                    }
+                }, this);
+                console.info("Done Recovery");
+                console.info(request.intent.slots);
+        }
+
+        console.info("Starting Save");
+        this.handler.attributes["temp_" + request.intent.name] = request.intent;
+        console.info("Done Save");
+        console.info(request.intent.slots);
+
+    }
+
     launch(): void {
-        const speech = "Welcome to Dental Office, this skill allows you to book appointments in our dental offices, start by saying book appointment";
-        this.handler.emit(":ask", speech, speech);
+
+
+         const speech = "Welcome to Dental Office, this skill allows you to book appointments in our dental offices, start by saying book an appointment";
+         this.handler.emit(":ask", speech, speech);
     }
 }
 
