@@ -451,7 +451,7 @@ class AppointmentsController extends IntentController {
     }
 
     // HELPERS
-    async checkClean(intentObj: Alexa.Intent): Promise<void> {
+    async checkFixAgainstConfiguration(intentObj: Alexa.Intent): Promise<void> {
         let id = "";
         if (intentObj.slots.TO_FIX.resolutions &&
             intentObj.slots.TO_FIX.resolutions.resolutionsPerAuthority &&
@@ -477,7 +477,6 @@ class AppointmentsController extends IntentController {
             const config = await this.getModelConfiguration();
             switch (id) {
                 case "Time":
-
                     if (config.timeConfig === "S") {
                         if (intentObj.confirmationStatus !== "CONFIRMED") {
                             intentObj.confirmationStatus = "NONE";
@@ -529,6 +528,46 @@ class AppointmentsController extends IntentController {
         }
     }
 
+    // Allows to confirm matched fields without confirmation
+    async clusterFirstSlots(intentReq: Alexa.IntentRequest): Promise<void> {
+
+        const intentObj = intentReq.intent;
+
+        if ((intentReq.dialogState === "STARTED" || intentReq.dialogState === undefined) && !this.handler.attributes["temp_" + intentReq.intent.name]) {
+            console.info("Starting Clustering");
+            // we check only the main fields
+            const slotsToCheck = ["SEL_BRANCH", "SEL_SERVICE", "SEL_ASSESSOR", "SEL_DATE", "SEL_TIME"];
+            const toConfirm = [];
+            let count = 0;
+            slotsToCheck.forEach((item) => {
+                // check if slot has value but no confirmation
+                console.info(`Checking Slot ${item} has resolutions`);
+                if (intentObj.slots[item].value !== undefined && (intentObj.slots[item].confirmationStatus === "NONE" || intentObj.slots[item].confirmationStatus === undefined) ) {
+                    let checkMatch: boolean = false;
+                    // check if slot is a proper match
+                    if (intentObj.slots[item].resolutions) {
+                        console.info(`Slot ${item} has resolutions`);
+                        checkMatch = intentObj.slots[item].resolutions.resolutionsPerAuthority.some((res) => {
+                            return res.status.code === "ER_SUCCESS_MATCH";
+                        });
+                    }
+                    // if match text or date/time, save for further confirmation
+                    if (checkMatch || item === "SEL_DATE" || item === "SEL_TIME") {
+                        count++;
+                        console.info(`Increasing count for item: ${item}`);
+                        toConfirm.push(item);
+                    }
+                }
+            });
+            // this means the user provided a bunch of slots and they match, we should confirm them if more than one
+            if (count > 1) {
+                toConfirm.forEach((item) => {
+                    console.info(`Marking ${item} as confirmed`);
+                    intentObj.slots[item].confirmationStatus = "CONFIRMED";
+                });
+            }
+        }
+    }
 
     // INTENT BODY
 
@@ -536,7 +575,8 @@ class AppointmentsController extends IntentController {
         return await this.configurationService.findOne();
     }
 
-    async assignDefaults(intentObj: Alexa.Intent): Promise<void> {
+    // read the model config from the db and populate defaults
+    async assignConfigurationDefaults(intentObj: Alexa.Intent): Promise<void> {
         const config = await this.getModelConfiguration();
 
         if (intentObj.slots.SEL_ASSESSOR.confirmationStatus !== "CONFIRMED") {
@@ -604,13 +644,13 @@ class AppointmentsController extends IntentController {
         const request: Alexa.IntentRequest = this.handler.event.request; // = fakeDialogState(this.handler.event.request);
         const intentObj = request.intent;
 
-        this.delegateSlotCollection(request);
+        await this.clusterFirstSlots(request);
 
-        await this.checkClean(intentObj);
+        await this.restoreIntentSession(request);
 
-        console.info(`to fix despues de clean ${intentObj.slots.TO_FIX.value}`);
+        await this.checkFixAgainstConfiguration(intentObj);
 
-        await this.assignDefaults(intentObj);
+        await this.assignConfigurationDefaults(intentObj);
 
        if (intentObj.slots.SEL_BRANCH.confirmationStatus !== "CONFIRMED") {
             this.handleBranchMatch(intentObj);
@@ -637,35 +677,32 @@ class AppointmentsController extends IntentController {
        return false;
     }
 
-    delegateSlotCollection(request: Alexa.IntentRequest): void {
+    async restoreIntentSession(intentReq: Alexa.IntentRequest): Promise<void> {
 
-        let intentObj = request.intent;
-        console.info("State: " + request.dialogState);
+        console.info("State: " + intentReq.dialogState);
         // We only need to restore state if all the slots are unconfirmed
-        if (request.dialogState === "STARTED" && this.handler.attributes["temp_" + request.intent.name]) {
+        if (intentReq.dialogState === "STARTED" && this.handler.attributes["temp_" + intentReq.intent.name]) {
                 console.info("Starting Recovery");
-                let tempSlots = this.handler.attributes["temp_" + request.intent.name].slots;
+                let tempSlots = this.handler.attributes["temp_" + intentReq.intent.name].slots;
 
                 Object.keys(tempSlots).forEach(currentSlot => {
                     if (tempSlots[currentSlot].value) {
-                        request.intent.slots[currentSlot] = tempSlots[currentSlot];
-                        request.intent.slots[currentSlot].confirmationStatus = tempSlots[currentSlot].confirmationStatus;
+                        intentReq.intent.slots[currentSlot] = tempSlots[currentSlot];
+                        intentReq.intent.slots[currentSlot].confirmationStatus = tempSlots[currentSlot].confirmationStatus;
                     }
                 }, this);
                 console.info("Done Recovery");
-                console.info(request.intent.slots);
+                console.info(intentReq.intent.slots);
         }
 
         console.info("Starting Save");
-        this.handler.attributes["temp_" + request.intent.name] = request.intent;
+        this.handler.attributes["temp_" + intentReq.intent.name] = intentReq.intent;
         console.info("Done Save");
-        console.info(request.intent.slots);
+        console.info(intentReq.intent.slots);
 
     }
 
     launch(): void {
-
-
          const speech = "Welcome to Dental Office, this skill allows you to book appointments in our dental offices, start by saying book an appointment";
          this.handler.emit(":ask", speech, speech);
     }
