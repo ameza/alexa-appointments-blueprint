@@ -636,6 +636,7 @@ class AppointmentsController extends IntentController {
        });
        return false;
     }
+
     delegateSlotCollection(request: Alexa.IntentRequest): void {
 
         let intentObj = request.intent;
@@ -667,6 +668,11 @@ class AppointmentsController extends IntentController {
 
          const speech = "Welcome to Dental Office, this skill allows you to book appointments in our dental offices, start by saying book an appointment";
          this.handler.emit(":ask", speech, speech);
+    }
+
+    nodefined(): void {
+        const speech = "bad request";
+        this.handler.emit(":ask", speech, speech);
     }
 }
 
