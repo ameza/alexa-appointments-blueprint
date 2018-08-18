@@ -51,9 +51,9 @@ class AppointmentsController extends IntentController {
         console.log("in completed");
 
         const appointmentRequest: AppointmentRequest = {
-            selBranch: intentObj.slots.SEL_BRANCH.value,
-            selAssessor: intentObj.slots.SEL_ASSESSOR.value,
-            selService: intentObj.slots.SEL_SERVICE.value,
+            selBranch: intentObj.slots.SEL_BRANCH.resolutions.resolutionsPerAuthority[0].values[0].value.name,
+            selAssessor: intentObj.slots.SEL_ASSESSOR.resolutions.resolutionsPerAuthority[0].values[0].value.name,
+            selService: intentObj.slots.SEL_SERVICE.resolutions.resolutionsPerAuthority[0].values[0].value.name,
             selDate: intentObj.slots.SEL_DATE.value,
             selTime: intentObj.slots.SEL_TIME.value
         };
@@ -84,7 +84,7 @@ class AppointmentsController extends IntentController {
         console.info(`pregunto con ${intentObj.slots.TO_FIX.value}`);
         const elicit: Elicit = <Elicit>{
             slotToElicit: "TO_FIX",
-            speechOutput: `What part of the appointment would you like to change: Location, ${timeText}, ${assessorText}, ${dateText} or Service ?`,
+            speechOutput: `What part of the appointment would you like to change: Location, ${timeText}, ${assessorText}, ${dateText} or Service ? You can also say cancel to discard the appointment`,
             cardContent: `Location, Service, Consultant, Date or time`,
             cardTitle: "Available Offices",
             updatedIntent: intentObj,
@@ -105,7 +105,7 @@ class AppointmentsController extends IntentController {
 
                 const assessorText = (intentObj.slots.SEL_ASSESSOR.value === "N/A") ? "" : `with ${intentObj.slots.SEL_ASSESSOR.value}`;
                 const dateText = (intentObj.slots.SEL_DATE.value === "N/A") ? "" : `for ${intentObj.slots.SEL_DATE.value}`;
-                const timeText = (intentObj.slots.SEL_TIME.value === "N/A") ? "" : `at ${intentObj.slots.SEL_TIME.value}`;
+                const timeText = (intentObj.slots.SEL_TIME.value === "N/A") ? "" : `at ${intentObj.slots.SEL_TIME.value} hours`;
 
                 const message = `You want to book an ${intentObj.slots.SEL_SERVICE.value} appointment ${assessorText} ${dateText} ${timeText} on the ${intentObj.slots.SEL_BRANCH.value} office`;
                 const speechOutput = `${message}, is that correct?`;
@@ -113,7 +113,9 @@ class AppointmentsController extends IntentController {
                 const repromptSpeech = speechOutput;
                 const cardContent = speechOutput;
                 console.info(`about to confirm ${intentObj.confirmationStatus} and ${intentObj.slots.TO_FIX.value}`);
-                this.handler.emit(":confirmIntentWithCard", speechOutput, repromptSpeech, cardTitle, cardContent);
+                console.info(`slots before last confirm`);
+                console.info(intentObj.slots);
+                this.handler.emit(":confirmIntentWithCard", speechOutput, repromptSpeech, cardTitle, cardContent, intentObj);
             } else {
                 // Users denies the confirmation of intent. May be value of the slots are not correct.
                 console.info("handle denial");
@@ -143,7 +145,7 @@ class AppointmentsController extends IntentController {
         return ` ${all.map( x => { return x.value; }).join("\r\n")}`;
     }
 
-   async branchElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean): Promise<void> {
+    async branchElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean): Promise<void> {
         const branches = await this.branchService.findAll();
         const invalidSpeech = (invalid) ?  `I couldn't match that with any of our locations.` : ``;
         const repromptSpeech = `${invalidSpeech} Our most popular locations are: ${this.getRecommendedBranches(branches)}. I've sent the complete list of locations to the Alexa App. Where would you like to book your appointment?`;
@@ -155,10 +157,10 @@ class AppointmentsController extends IntentController {
             cardContent: `${this.getFullBranches(branches)}`,
             cardTitle: "Available Offices",
             updatedIntent: intentObj,
-           /* imageObj: {
-                smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
-                largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
-            }*/
+            /* imageObj: {
+                 smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
+                 largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
+             }*/
         };
 
         this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.repromptSpeech, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj);
@@ -166,20 +168,15 @@ class AppointmentsController extends IntentController {
     }
 
     handleBranchSlotConfirmation(intentObj: Alexa.Intent): void {
-        switch (intentObj.slots.SEL_BRANCH.confirmationStatus) {
-            case "DENIED":
-                this.branchElicit(intentObj, true, false);
-                break;
-            case "CONFIRMED":
-                console.info("SAVING CONFIRMED");
-                this.handler.attributes["temp_" + intentObj.name] = intentObj;
-                break;
-            default:
-                // Slot value is not confirmed
-                const slotToConfirm = "SEL_BRANCH";
-                const speechOutput = `I heard you would like to book in our ${intentObj.slots.SEL_BRANCH.value} office, is that correct?`;
-                const repromptSpeech = speechOutput;
-                this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech);
+        if (intentObj.slots.SEL_BRANCH.confirmationStatus === "DENIED") {
+            this.branchElicit(intentObj, true, false);
+        }
+        else {
+            // Slot value is not confirmed
+            const slotToConfirm = "SEL_BRANCH";
+            const speechOutput = `I heard you would like to book in our ${intentObj.slots.SEL_BRANCH.value} office, is that correct?`;
+            const repromptSpeech = speechOutput;
+            this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech);
         }
     }
 
@@ -244,10 +241,10 @@ class AppointmentsController extends IntentController {
             cardContent: `${this.getFullServices(services)}`,
             cardTitle: "Available Services",
             updatedIntent: intentObj,
-          /*  imageObj: {
-                smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
-                largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
-            }*/
+            /*  imageObj: {
+                  smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
+                  largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
+              }*/
         };
 
         this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.repromptSpeech, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj);
@@ -298,10 +295,10 @@ class AppointmentsController extends IntentController {
             cardContent: `${dates}`,
             cardTitle: "Available Dates",
             updatedIntent: intentObj,
-           /* imageObj: {
-                smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
-                largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
-            }*/
+            /* imageObj: {
+                 smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
+                 largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
+             }*/
         };
 
         this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.repromptSpeech, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj);
@@ -368,10 +365,10 @@ class AppointmentsController extends IntentController {
             cardContent: `${this.getFullAssessors(assessors)}`,
             cardTitle: "Available Assessors",
             updatedIntent: intentObj,
-          /*  imageObj: {
-                smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
-                largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
-            }*/
+            /*  imageObj: {
+                  smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
+                  largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
+              }*/
         };
 
         this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.repromptSpeech, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj);
@@ -422,10 +419,10 @@ class AppointmentsController extends IntentController {
             cardContent: `${times}`,
             cardTitle: "Available Times",
             updatedIntent: intentObj,
-          /*  imageObj: {
-                smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
-                largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
-            }*/
+            /*  imageObj: {
+                  smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
+                  largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
+              }*/
         };
 
         this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.repromptSpeech, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj);
@@ -451,6 +448,8 @@ class AppointmentsController extends IntentController {
     }
 
     // HELPERS
+
+    // Checks if the user requested a fix
     async checkFixAgainstConfiguration(intentObj: Alexa.Intent): Promise<void> {
         let id = "";
         if (intentObj.slots.TO_FIX.resolutions &&
@@ -533,7 +532,7 @@ class AppointmentsController extends IntentController {
 
         const intentObj = intentReq.intent;
 
-        if ((intentReq.dialogState === "STARTED" || intentReq.dialogState === undefined) && !this.handler.attributes["temp_" + intentReq.intent.name]) {
+        if (intentReq.intent.confirmationStatus !== "DENIED" && (intentReq.dialogState === "STARTED" || intentReq.dialogState === undefined) && !this.handler.attributes["temp_" + intentReq.intent.name]) {
             console.info("Starting Clustering");
             // we check only the main fields
             const slotsToCheck = ["SEL_BRANCH", "SEL_SERVICE", "SEL_ASSESSOR", "SEL_DATE", "SEL_TIME"];
@@ -541,7 +540,7 @@ class AppointmentsController extends IntentController {
             let count = 0;
             slotsToCheck.forEach((item) => {
                 // check if slot has value but no confirmation
-                console.info(`Checking Slot ${item} has resolutions`);
+                console.info(`Checking Slot ${item}`);
                 if (intentObj.slots[item].value !== undefined && (intentObj.slots[item].confirmationStatus === "NONE" || intentObj.slots[item].confirmationStatus === undefined) ) {
                     let checkMatch: boolean = false;
                     // check if slot is a proper match
@@ -569,13 +568,7 @@ class AppointmentsController extends IntentController {
         }
     }
 
-    // INTENT BODY
-
-    async getModelConfiguration(): Promise<Configuration> {
-        return await this.configurationService.findOne();
-    }
-
-    // read the model config from the db and populate defaults
+    // reads the model config from the db and populate defaults
     async assignConfigurationDefaults(intentObj: Alexa.Intent): Promise<void> {
         const config = await this.getModelConfiguration();
 
@@ -638,21 +631,68 @@ class AppointmentsController extends IntentController {
         }
     }
 
+    // retrieves the model config from the db
+    async getModelConfiguration(): Promise<Configuration> {
+        return await this.configurationService.findOne();
+    }
+
+    // restores the appointment intent from session in case of an interruption
+    async restoreIntentSession(intentReq: Alexa.IntentRequest): Promise<void> {
+
+        console.info("State: " + intentReq.dialogState);
+        // We only need to restore state if all the slots are unconfirmed
+        if (intentReq.dialogState === "STARTED" && this.handler.attributes["temp_" + intentReq.intent.name]) {
+            console.info("Starting Recovery");
+            let tempSlots = this.handler.attributes["temp_" + intentReq.intent.name].slots;
+
+            Object.keys(tempSlots).forEach(currentSlot => {
+                if (tempSlots[currentSlot].value) {
+                    intentReq.intent.slots[currentSlot] = tempSlots[currentSlot];
+                    intentReq.intent.slots[currentSlot].confirmationStatus = tempSlots[currentSlot].confirmationStatus;
+                }
+            }, this);
+            console.info("Done Recovery");
+            console.info(intentReq.intent.slots);
+        }
+
+        console.info("Starting Save");
+        this.handler.attributes["temp_" + intentReq.intent.name] = intentReq.intent;
+        console.info("Done Save");
+        console.info(intentReq.intent.slots);
+
+    }
+
+    // INTENT BODY
 
     async book(): Promise<void> {
 
         const request: Alexa.IntentRequest = this.handler.event.request; // = fakeDialogState(this.handler.event.request);
         const intentObj = request.intent;
 
+        console.info(`virgin request`)
+        console.info(request.intent.slots);
+
         await this.clusterFirstSlots(request);
+
+        console.info(`request after cluster`);
+        console.info(request.intent.slots);
 
         await this.restoreIntentSession(request);
 
+        console.info(`request after restore`);
+        console.info(request.intent.slots);
+
         await this.checkFixAgainstConfiguration(intentObj);
+
+        console.info(`request after fix config`);
+        console.info(request.intent.slots);
 
         await this.assignConfigurationDefaults(intentObj);
 
-       if (intentObj.slots.SEL_BRANCH.confirmationStatus !== "CONFIRMED") {
+        console.info(`request assign config defaults`);
+        console.info(request.intent.slots);
+
+        if (intentObj.slots.SEL_BRANCH.confirmationStatus !== "CONFIRMED") {
             this.handleBranchMatch(intentObj);
         } else if (intentObj.slots.SEL_SERVICE.confirmationStatus !== "CONFIRMED") {
             this.handleServiceMatch(intentObj);
@@ -668,43 +708,9 @@ class AppointmentsController extends IntentController {
         }
     }
 
-    haveConfirmedSlots(intentObj: Alexa.Intent): Boolean {
-       Object.keys(intentObj.slots).forEach(currentSlot => {
-           if (intentObj.slots[currentSlot].confirmationStatus === "CONFIRMED") {
-               return true;
-           }
-       });
-       return false;
-    }
-
-    async restoreIntentSession(intentReq: Alexa.IntentRequest): Promise<void> {
-
-        console.info("State: " + intentReq.dialogState);
-        // We only need to restore state if all the slots are unconfirmed
-        if (intentReq.dialogState === "STARTED" && this.handler.attributes["temp_" + intentReq.intent.name]) {
-                console.info("Starting Recovery");
-                let tempSlots = this.handler.attributes["temp_" + intentReq.intent.name].slots;
-
-                Object.keys(tempSlots).forEach(currentSlot => {
-                    if (tempSlots[currentSlot].value) {
-                        intentReq.intent.slots[currentSlot] = tempSlots[currentSlot];
-                        intentReq.intent.slots[currentSlot].confirmationStatus = tempSlots[currentSlot].confirmationStatus;
-                    }
-                }, this);
-                console.info("Done Recovery");
-                console.info(intentReq.intent.slots);
-        }
-
-        console.info("Starting Save");
-        this.handler.attributes["temp_" + intentReq.intent.name] = intentReq.intent;
-        console.info("Done Save");
-        console.info(intentReq.intent.slots);
-
-    }
-
     launch(): void {
-         const speech = "Welcome to Dental Office, this skill allows you to book appointments in our dental offices, start by saying book an appointment";
-         this.handler.emit(":ask", speech, speech);
+        const speech = "Welcome to Dental Office, this skill allows you to book appointments in our dental offices, start by saying book an appointment";
+        this.handler.emit(":ask", speech, speech);
     }
 
     nodefined(): void {
