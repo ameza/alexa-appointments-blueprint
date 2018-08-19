@@ -22,5 +22,19 @@ export interface WorldlyHelloResponse {
     ssml: string;
 }
 
-// assessor
+// elicit
+
+export interface Elicit  {
+    branches: string;
+    slotToElicit: string;
+    speechOutput: string;
+    repromptSpeech: string;
+    cardContent: string;
+    cardTitle: string;
+    updatedIntent: any;
+    imageObj: {
+        smallImageUrl: string;
+        largeImageUrl: string;
+    };
+}
 

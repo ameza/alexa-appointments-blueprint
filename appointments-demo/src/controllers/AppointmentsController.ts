@@ -1,27 +1,9 @@
 import * as Alexa from "alexa-sdk";
-
 import * as moment  from "moment";
-import { fakeDialogState } from "../helpers/RequestHelpers";
-import { AppointmentRequest, Assessor, Branch, Configuration, Service } from "../models";
+import { AppointmentRequest, Assessor, Branch, Configuration, Elicit } from "../models";
+import { AppointmentService, AssessorService, BranchService, ConfigurationService, DateService, ProcedureService, TimeService } from "../services";
 import { IntentController } from "./IntentController";
 
-import { AppointmentService, AssessorService, BranchService, ConfigurationService, DateService, ProcedureService, TimeService } from "../services";
-
-
-
-interface Elicit  {
-    branches: string;
-    slotToElicit: string;
-    speechOutput: string;
-    repromptSpeech: string;
-    cardContent: string;
-    cardTitle: string;
-    updatedIntent: any;
-    imageObj: {
-        smallImageUrl: string;
-        largeImageUrl: string;
-    };
-}
 
 class AppointmentsController extends IntentController {
 
@@ -35,13 +17,13 @@ class AppointmentsController extends IntentController {
 
     constructor(handler: Alexa.Handler<Alexa.Request>) {
         super(handler);
-        this.appointmentService = new AppointmentService();
-        this.assessorService = new AssessorService();
-        this.procedureService = new ProcedureService();
-        this.branchService = new BranchService();
+        this.appointmentService = new AppointmentService(handler);
+        this.assessorService = new AssessorService(handler);
+        this.procedureService = new ProcedureService(handler);
+        this.branchService = new BranchService(handler);
         this.configurationService = new ConfigurationService();
-        this.dateService = new DateService();
-        this.timeService = new TimeService();
+        this.dateService = new DateService(handler);
+        this.timeService = new TimeService(handler);
 
     }
 
@@ -98,7 +80,7 @@ class AppointmentsController extends IntentController {
 
     }
 
-    handleBookIntentConfirmation(intentObj: Alexa.Intent): void {
+    async handleBookIntentConfirmation(intentObj: Alexa.Intent): Promise<void> {
         if (intentObj.confirmationStatus !== "CONFIRMED") {
             if (intentObj.confirmationStatus !== "DENIED") {
                 // Intent is not confirmed
@@ -119,334 +101,13 @@ class AppointmentsController extends IntentController {
             } else {
                 // Users denies the confirmation of intent. May be value of the slots are not correct.
                 console.info("handle denial");
-                this.handleBookIntentDenial(intentObj);
+                await this.handleBookIntentDenial(intentObj);
             }
         } else {
             console.info("handle book intent confirmed");
-            this.handleBookIntentConfirmed(intentObj);
+            await this.handleBookIntentConfirmed(intentObj);
         }
     }
-
-    // BRANCH
-
-    getRecommendedBranches(branches: Array<Branch>): string {
-        const recommended = branches.filter((x) => x.enabled && x.popular === true);
-        if (recommended.length === 1) {
-            return recommended.pop().value;
-        }
-        else {
-            const last = recommended.pop();
-            return ` ${recommended.map(x => {  return x.value; }).join(", ")} and ${last.value}`;
-        }
-    }
-
-    getFullBranches(branches: Array<Branch>): string {
-        const all = branches.filter((x) => x.enabled);
-        return ` ${all.map( x => { return x.value; }).join("\r\n")}`;
-    }
-
-    async branchElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean): Promise<void> {
-        const branches = await this.branchService.findAll();
-        const invalidSpeech = (invalid) ?  `I couldn't match that with any of our locations.` : ``;
-        const repromptSpeech = `${invalidSpeech} Our most popular locations are: ${this.getRecommendedBranches(branches)}. I've sent the complete list of locations to the Alexa App. Where would you like to book your appointment?`;
-
-        const elicit: Elicit = <Elicit>{
-            slotToElicit: "SEL_BRANCH",
-            repromptSpeech: repromptSpeech,
-            speechOutput: (goFull) ? repromptSpeech : "Where would you like to book your appointment?",
-            cardContent: `${this.getFullBranches(branches)}`,
-            cardTitle: "Available Offices",
-            updatedIntent: intentObj,
-            /* imageObj: {
-                 smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
-                 largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
-             }*/
-        };
-
-        this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.repromptSpeech, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj);
-
-    }
-
-    handleBranchSlotConfirmation(intentObj: Alexa.Intent): void {
-        if (intentObj.slots.SEL_BRANCH.confirmationStatus === "DENIED") {
-            this.branchElicit(intentObj, true, false);
-        }
-        else {
-            // Slot value is not confirmed
-            const slotToConfirm = "SEL_BRANCH";
-            const speechOutput = `I heard you would like to book in our ${intentObj.slots.SEL_BRANCH.value} office, is that correct?`;
-            const repromptSpeech = speechOutput;
-            this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech);
-        }
-    }
-
-    handleBranchMatch(intentObj: Alexa.Intent): void {
-        if (!!intentObj.slots.SEL_BRANCH.value) {
-            if (intentObj.slots.SEL_BRANCH.resolutions &&
-                intentObj.slots.SEL_BRANCH.resolutions.resolutionsPerAuthority &&
-                intentObj.slots.SEL_BRANCH.resolutions.resolutionsPerAuthority[0] &&
-                intentObj.slots.SEL_BRANCH.resolutions.resolutionsPerAuthority[0].status &&
-                intentObj.slots.SEL_BRANCH.resolutions.resolutionsPerAuthority[0].status.code &&
-                intentObj.slots.SEL_BRANCH.resolutions.resolutionsPerAuthority[0].status.code === "ER_SUCCESS_MATCH") {
-                this.handleBranchSlotConfirmation(intentObj);
-            }
-            else {
-                this.branchElicit(intentObj, true, true);
-            }
-        }
-        else {
-            this.branchElicit(intentObj, false, false);
-        }
-    }
-
-    // SERVICE
-
-    getRecommendedServices(services: Array<Service>): string {
-        const recommended = services.filter((x) => x.enabled && x.popular === true);
-        if (recommended.length === 1) {
-            return recommended.pop().value;
-        }
-        else {
-            const last = recommended.pop();
-            return `${recommended.map(x => {  return x.value; }).join(", ")} and ${last.value}`;
-        }
-    }
-
-    getFullServices(services: Array<Service>): string {
-        const all = services.filter((x) => x.enabled);
-        return ` ${all.map( x => { return x.value; }).join("\r\n")}`;
-    }
-
-    handleServiceSlotConfirmation(intentObj: Alexa.Intent): void {
-        if (intentObj.slots.SEL_SERVICE.confirmationStatus === "DENIED") {
-            this.serviceElicit(intentObj, true, false);
-        } else {
-            // Slot value is not confirmed
-            const slotToConfirm = "SEL_SERVICE";
-            const speechOutput = `You want the ${intentObj.slots.SEL_SERVICE.value} service, is that correct?`;
-            const repromptSpeech = speechOutput;
-            this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech);
-        }
-    }
-
-    async serviceElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean): Promise<void> {
-        const services = await this.procedureService.findAll();
-        const invalidSpeech = (invalid) ? `Unfortunately that's not a service I can identify.` : ``;
-        const repromptSpeech = `${invalidSpeech} Our most popular services are: ${this.getRecommendedServices(services)}. I've sent the complete list of services to your Alexa App. What service would you like to book?`;
-        console.info(repromptSpeech);
-        const elicit: Elicit = <Elicit>{
-            slotToElicit: "SEL_SERVICE",
-            repromptSpeech: repromptSpeech,
-            speechOutput: (goFull || invalid) ? repromptSpeech : "What service would you like to book?",
-            cardContent: `${this.getFullServices(services)}`,
-            cardTitle: "Available Services",
-            updatedIntent: intentObj,
-            /*  imageObj: {
-                  smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
-                  largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
-              }*/
-        };
-
-        this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.repromptSpeech, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj);
-
-    }
-
-    handleServiceMatch(intentObj: Alexa.Intent): void {
-        if (!!intentObj.slots.SEL_SERVICE.value) {
-            if (intentObj.slots.SEL_SERVICE.resolutions &&
-                intentObj.slots.SEL_SERVICE.resolutions.resolutionsPerAuthority &&
-                intentObj.slots.SEL_SERVICE.resolutions.resolutionsPerAuthority[0] &&
-                intentObj.slots.SEL_SERVICE.resolutions.resolutionsPerAuthority[0].status &&
-                intentObj.slots.SEL_SERVICE.resolutions.resolutionsPerAuthority[0].status.code &&
-                intentObj.slots.SEL_SERVICE.resolutions.resolutionsPerAuthority[0].status.code === "ER_SUCCESS_MATCH") {
-                this.handleServiceSlotConfirmation(intentObj);
-            }
-            else {
-                this.serviceElicit(intentObj, true, true);
-            }
-        }
-        else {
-            this.serviceElicit(intentObj, false, false);
-        }
-    }
-
-    // DATE
-
-    handleDateSlotConfirmation(intentObj: Alexa.Intent): void {
-        if (intentObj.slots.SEL_DATE.confirmationStatus === "DENIED") {
-            this.dateElicit(intentObj, true, false);
-        } else {
-            // Slot value is not confirmed
-            const slotToConfirm = "SEL_DATE";
-            const speechOutput = `You want to book on ${intentObj.slots.SEL_DATE.value}, is that correct?`;
-            const repromptSpeech = speechOutput;
-            this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech);
-        }
-    }
-
-    dateElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean): void {
-        const dates = "05/12/2018, 06/12/2018 and 07/12/2018";
-        const invalidSpeech = (invalid) ? `I'm sorry, I couldn't find that date. You must provide an specific date` : ``;
-        const repromptSpeech = `${invalidSpeech} I have some space on the following dates: ${dates}. I've sent a list of available dates to your Alexa App. What's your date preference for this appointment?,`;
-        const elicit: Elicit = <Elicit>{
-            slotToElicit: "SEL_DATE",
-            repromptSpeech: repromptSpeech,
-            speechOutput: (goFull || invalid) ? repromptSpeech : "On what date would you like to book?",
-            cardContent: `${dates}`,
-            cardTitle: "Available Dates",
-            updatedIntent: intentObj,
-            /* imageObj: {
-                 smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
-                 largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
-             }*/
-        };
-
-        this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.repromptSpeech, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj);
-
-    }
-
-    handleDateMatch(intentObj: Alexa.Intent): void {
-        if (!!intentObj.slots.SEL_DATE.value) {
-
-            console.info(intentObj.slots.SEL_DATE.value);
-
-            if (moment(intentObj.slots.SEL_DATE.value, "YYYY-MM-DD", true).isValid() === true) {
-                console.info("confirm");
-                this.handleDateSlotConfirmation(intentObj);
-            }
-            else {
-                console.info("entro");
-                this.dateElicit(intentObj, true, true);
-            }
-        }
-        else {
-            this.dateElicit(intentObj, false, false);
-        }
-    }
-
-    // ASSESSOR
-
-    getRecommendedAssessors(assessors: Array<Assessor>): string {
-        const recommended = assessors.filter((x) => x.enabled && x.popular === true);
-        if (recommended.length === 1) {
-            return recommended.pop().value;
-        }
-        else {
-            const last = recommended.pop();
-            return ` ${recommended.map(x => {  return x.value; }).join(", ")} and ${last.value}`;
-        }
-    }
-
-    getFullAssessors(assessors: Array<Assessor>): string {
-        const all = assessors.filter((x) => x.enabled);
-        return ` ${all.map( x => { return x.value; }).join("\r\n")}`;
-    }
-
-    handleAssessorSlotConfirmation(intentObj: Alexa.Intent): void {
-        if (intentObj.slots.SEL_ASSESSOR.confirmationStatus === "DENIED") {
-            this.assessorElicit(intentObj, true, false);
-        } else {
-            // Slot value is not confirmed
-            const slotToConfirm = "SEL_ASSESSOR";
-            const speechOutput = `You want to book with ${intentObj.slots.SEL_ASSESSOR.value}, is that correct?`;
-            const repromptSpeech = speechOutput;
-            this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech);
-        }
-    }
-
-    async assessorElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean): Promise<void> {
-        const assessors = await this.assessorService.findAll();
-        const invalidSpeech = (invalid) ? `I'm sorry, I couldn't find that assessor.` : ``;
-        const repromptSpeech = `${invalidSpeech} Currently we have the following assessors available: ${ this.getRecommendedAssessors(assessors)}. I've sent the complete list of assessors to your Alexa App. Who would you like to book with?`;
-        const elicit: Elicit = <Elicit>{
-            slotToElicit: "SEL_ASSESSOR",
-            repromptSpeech: repromptSpeech,
-            speechOutput: (goFull || invalid) ? repromptSpeech : "Who would you like to assist you?",
-            cardContent: `${this.getFullAssessors(assessors)}`,
-            cardTitle: "Available Assessors",
-            updatedIntent: intentObj,
-            /*  imageObj: {
-                  smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
-                  largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
-              }*/
-        };
-
-        this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.repromptSpeech, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj);
-
-    }
-
-    handleAssessorMatch(intentObj: Alexa.Intent): void {
-        if (!!intentObj.slots.SEL_ASSESSOR.value) {
-            if (intentObj.slots.SEL_ASSESSOR.resolutions &&
-                intentObj.slots.SEL_ASSESSOR.resolutions.resolutionsPerAuthority &&
-                intentObj.slots.SEL_ASSESSOR.resolutions.resolutionsPerAuthority[0] &&
-                intentObj.slots.SEL_ASSESSOR.resolutions.resolutionsPerAuthority[0].status &&
-                intentObj.slots.SEL_ASSESSOR.resolutions.resolutionsPerAuthority[0].status.code &&
-                intentObj.slots.SEL_ASSESSOR.resolutions.resolutionsPerAuthority[0].status.code === "ER_SUCCESS_MATCH") {
-                this.handleAssessorSlotConfirmation(intentObj);
-            }
-            else {
-                this.assessorElicit(intentObj, true, true);
-            }
-        }
-        else {
-            this.assessorElicit(intentObj, false, false);
-        }
-    }
-
-    // TIME
-
-    handleTimeSlotConfirmation(intentObj: Alexa.Intent): void {
-        if (intentObj.slots.SEL_TIME.confirmationStatus === "DENIED") {
-            this.timeElicit(intentObj, true, false);
-        } else {
-            // Slot value is not confirmed
-            const slotToConfirm = "SEL_TIME";
-            const speechOutput = `You want to book at ${intentObj.slots.SEL_TIME.value}, is that correct?`;
-            const repromptSpeech = speechOutput;
-            this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech);
-        }
-    }
-
-    timeElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean): void {
-        const times = "14:00, 14:30 and 15:00";
-        const invalidSpeech = (invalid) ? `That doesn't look like a valid time` : ``;
-        const repromptSpeech = `${invalidSpeech} Some available slots on this date are: ${times}. I've sent a list of available times for this day to your Alexa App. What is your time preference for this appointment,`;
-        const elicit: Elicit = <Elicit>{
-            slotToElicit: "SEL_TIME",
-            repromptSpeech: repromptSpeech,
-            speechOutput: (goFull || invalid) ? repromptSpeech : "At what time would you like to book?",
-            cardContent: `${times}`,
-            cardTitle: "Available Times",
-            updatedIntent: intentObj,
-            /*  imageObj: {
-                  smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
-                  largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
-              }*/
-        };
-
-        this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.repromptSpeech, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj);
-
-    }
-
-    handleTimeMatch(intentObj: Alexa.Intent): void {
-        if (!!intentObj.slots.SEL_TIME.value) {
-            console.info(intentObj.slots.SEL_TIME);
-            if (moment(intentObj.slots.SEL_TIME.value, "hh:mm").isValid() === true) {
-                console.info("time confirm");
-                this.handleTimeSlotConfirmation(intentObj);
-            }
-            else {
-                console.info("elicit 1");
-                this.timeElicit(intentObj, true, true);
-            }
-        }
-        else {
-            console.info("elicit 2");
-            this.timeElicit(intentObj, false, false);
-        }
-    }
-
     // HELPERS
 
     // Checks if the user requested a fix
@@ -508,7 +169,7 @@ class AppointmentsController extends IntentController {
                         intentObj.slots.SEL_SERVICE.confirmationStatus = "NONE";
                         intentObj.slots.SEL_SERVICE.value = undefined;
                         intentObj.slots.SEL_SERVICE.resolutions = undefined;
-                        await this.serviceElicit(intentObj, true, false);
+                        await this.procedureService.procedureElicit(intentObj, true, false);
                     }
                     break;
                 case "Branch":
@@ -517,7 +178,7 @@ class AppointmentsController extends IntentController {
                         intentObj.slots.SEL_BRANCH.confirmationStatus = "NONE";
                         intentObj.slots.SEL_BRANCH.value = undefined;
                         intentObj.slots.SEL_BRANCH.resolutions = undefined;
-                        await this.branchElicit(intentObj, true, false);
+                        await this.branchService.branchElicit(intentObj, true, false);
                     }
                     break;
                 default:
@@ -576,7 +237,7 @@ class AppointmentsController extends IntentController {
             switch (config.assessorConfig) {
                 case "G":
 
-                    const randAssessor = await this.assessorService.findRandom();
+                    const randAssessor = await this.assessorService.assessorRepository.findRandom();
 
                     intentObj.slots.SEL_ASSESSOR.value = randAssessor.value;
                     intentObj.slots.SEL_ASSESSOR.confirmationStatus = "CONFIRMED";
@@ -596,7 +257,7 @@ class AppointmentsController extends IntentController {
             switch (config.dateConfig) {
                 case "G":
 
-                    const randDate = await this.dateService.findRandom();
+                    const randDate = await this.dateService.dateRepository.findRandom();
 
                     intentObj.slots.SEL_DATE.value = randDate;
                     intentObj.slots.SEL_DATE.confirmationStatus = "CONFIRMED";
@@ -614,7 +275,7 @@ class AppointmentsController extends IntentController {
             switch (config.timeConfig) {
                 case "G":
 
-                    const randTime = await this.timeService.findRandom();
+                    const randTime = await this.timeService.timeRepository.findRandom();
 
                     intentObj.slots.SEL_TIME.value = randTime;
                     intentObj.slots.SEL_TIME.confirmationStatus = "CONFIRMED";
@@ -633,7 +294,7 @@ class AppointmentsController extends IntentController {
 
     // retrieves the model config from the db
     async getModelConfiguration(): Promise<Configuration> {
-        return await this.configurationService.findOne();
+        return await this.configurationService.getModelConfiguration();
     }
 
     // restores the appointment intent from session in case of an interruption
@@ -669,7 +330,7 @@ class AppointmentsController extends IntentController {
         const request: Alexa.IntentRequest = this.handler.event.request; // = fakeDialogState(this.handler.event.request);
         const intentObj = request.intent;
 
-        console.info(`virgin request`)
+        console.info(`virgin request`);
         console.info(request.intent.slots);
 
         await this.clusterFirstSlots(request);
@@ -693,15 +354,15 @@ class AppointmentsController extends IntentController {
         console.info(request.intent.slots);
 
         if (intentObj.slots.SEL_BRANCH.confirmationStatus !== "CONFIRMED") {
-            this.handleBranchMatch(intentObj);
+            await this.branchService.handleBranchMatch(intentObj);
         } else if (intentObj.slots.SEL_SERVICE.confirmationStatus !== "CONFIRMED") {
-            this.handleServiceMatch(intentObj);
+            await this.procedureService.handleProcedureMatch(intentObj);
         } else if (intentObj.slots.SEL_ASSESSOR.confirmationStatus !== "CONFIRMED") {
-            this.handleAssessorMatch(intentObj);
+            await this.assessorService.handleAssessorMatch(intentObj);
         } else if (intentObj.slots.SEL_DATE.confirmationStatus !== "CONFIRMED") {
-            this.handleDateMatch(intentObj);
+            await this.dateService.handleDateMatch(intentObj);
         } else if (intentObj.slots.SEL_TIME.confirmationStatus !== "CONFIRMED") {
-            this.handleTimeMatch(intentObj);
+            await this.timeService.handleTimeMatch(intentObj);
         } else {
             request.dialogState = "COMPLETED";
             this.handleBookIntentConfirmation(intentObj);
