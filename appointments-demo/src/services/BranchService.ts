@@ -1,5 +1,5 @@
 import * as Alexa from "alexa-sdk";
-import { Branch, Elicit } from "../models";
+import { AlexaResponse, Branch } from "../models";
 
 import {
     BranchRepository
@@ -17,7 +17,7 @@ export class BranchService {
 
     // BRANCH
 
-    getRecommendedBranches(branches: Array<Branch>): string {
+    getPopularBranches(branches: Array<Branch>): string {
         const recommended = branches.filter((x) => x.enabled && x.popular === true);
         if (recommended.length === 1) {
             return recommended.pop().value;
@@ -33,17 +33,18 @@ export class BranchService {
         return ` ${all.map( x => { return x.value; }).join("\r\n")}`;
     }
 
-    async branchElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean): Promise<void> {
+    async branchElicit(intentObj: Alexa.Intent, listAllItems: boolean, indicatePreviousMatchInvalid: boolean): Promise<void> {
         const branches = await this.branchRepository.findAll();
-        const invalidSpeech = (invalid) ?  `I couldn't match that with any of our locations.` : ``;
-        const repromptSpeech = `${invalidSpeech} Our most popular locations are: ${this.getRecommendedBranches(branches)}. I've sent the complete list of locations to the Alexa App. Where would you like to book your appointment?`;
+        const invalidSpeech = (indicatePreviousMatchInvalid) ?  `I couldn't match that with any of our locations.` : ``;
+        const questionSpeech =  `Where would you like to book your appointment?`;
+        const repromptSpeech = `${invalidSpeech} Our most popular locations are: ${this.getPopularBranches(branches)}. I've sent the complete list of locations to the Alexa App. ${questionSpeech}`;
 
-        const elicit: Elicit = <Elicit>{
+        const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_BRANCH",
             repromptSpeech: repromptSpeech,
-            speechOutput: (goFull) ? repromptSpeech : "Where would you like to book your appointment?",
+            speechOutput: (listAllItems) ? repromptSpeech : `${questionSpeech}`,
             cardContent: `${this.getFullBranches(branches)}`,
-            cardTitle: "Available Offices",
+            cardTitle: "Available Offices / Locations",
             updatedIntent: intentObj,
             /* imageObj: {
                  smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
@@ -52,6 +53,21 @@ export class BranchService {
         };
 
         this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.repromptSpeech, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj);
+    }
+
+    async branchListing() {
+        const branches = await this.branchRepository.findAll();
+        const repromptSpeech =  `You can say: book an appointment on... followed by your location of preference. Check your alexa app for the full list`;
+        const speech = `Our most popular locations are: ${this.getPopularBranches(branches)}. I've sent the complete list of locations to the Alexa App. ${repromptSpeech}`;
+
+        const alexaResponse: AlexaResponse = <AlexaResponse>{
+            repromptSpeech: repromptSpeech,
+            speechOutput: speech,
+            cardContent: `${this.getFullBranches(branches)}`,
+            cardTitle: "Available Offices / Locations",
+        };
+
+        this.handler.emit(":askWithCard",  alexaResponse.speechOutput, alexaResponse.repromptSpeech, alexaResponse.cardTitle, alexaResponse.cardContent, alexaResponse.imageObj);
 
     }
 

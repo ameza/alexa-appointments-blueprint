@@ -1,5 +1,5 @@
 import * as Alexa from "alexa-sdk";
-import { Assessor, Elicit } from "../models";
+import { Assessor, AlexaResponse } from "../models";
 import { AssessorRepository } from "../repositories";
 
 export class AssessorService {
@@ -13,7 +13,7 @@ export class AssessorService {
 
     // ASSESSOR
 
-    getRecommendedAssessors(assessors: Array<Assessor>): string {
+    getPopularAssessors(assessors: Array<Assessor>): string {
         const recommended = assessors.filter((x) => x.enabled && x.popular === true);
         if (recommended.length === 1) {
             return recommended.pop().value;
@@ -44,8 +44,8 @@ export class AssessorService {
     async assessorElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean): Promise<void> {
         const assessors = await this.assessorRepository.findAll();
         const invalidSpeech = (invalid) ? `I'm sorry, I couldn't find that assessor.` : ``;
-        const repromptSpeech = `${invalidSpeech} Currently we have the following assessors available: ${ this.getRecommendedAssessors(assessors)}. I've sent the complete list of assessors to your Alexa App. Who would you like to book with?`;
-        const elicit: Elicit = <Elicit>{
+        const repromptSpeech = `${invalidSpeech} Currently we have the following assessors available: ${ this.getPopularAssessors(assessors)}. I've sent the complete list of assessors to your Alexa App. Who would you like to book with?`;
+        const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_ASSESSOR",
             repromptSpeech: repromptSpeech,
             speechOutput: (goFull || invalid) ? repromptSpeech : "Who would you like to assist you?",

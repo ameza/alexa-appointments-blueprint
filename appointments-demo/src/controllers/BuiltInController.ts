@@ -1,32 +1,42 @@
 import * as Alexa from "alexa-sdk";
-import { IntentController } from "./IntentController";
+import { IntentController } from "./base/IntentController";
 
-class BuiltInController extends IntentController {
+export class BuiltInController extends IntentController {
 
     constructor(handler: Alexa.Handler<Alexa.Request>) {
         super(handler);
     }
 
-    help(): void {
-        const speech = "Dental Office allows you to book appointments in our dental offices, start by saying book an appointment, if you are not sure about your available options just wait or check your alexa app";
+    helpIntent(): void {
+        const speech = "Dental Office allows you to bookIntent appointments in our dental offices, start by saying bookIntent an appointment, if you are not sure about your available options just wait or check your alexa app";
         this.handler.emit(":ask", speech, speech);
     }
 
-    stop(): void {
+    stopIntent(): void {
 
         const speech = "Thank you for using Dental Office";
 
         this.handler.emit(":tell", speech, speech);
     }
 
-    cancel(): void {
+    cancelIntent(): void {
         const speech = "Thank you for using Dental Office";
 
         this.handler.emit(":tell", speech, speech);
     }
 
-    fallBack(): void {
-        const speech = "Dental Office allows you to book appointments in our dental offices, start by saying book an appointment, if you are not sure about your available options just wait or check your alexa app";
+    fallBackIntent(): void {
+        const speech = "Dental Office allows you to bookIntent appointments in our dental offices, start by saying bookIntent an appointment, if you are not sure about your available options just wait or check your alexa app";
+        this.handler.emit(":ask", speech, speech);
+    }
+
+    launchIntent(): void {
+        const speech = "Welcome to Dental Office, this skill allows you to book appointments in our dental offices, start by saying book an appointment";
+        this.handler.emit(":ask", speech, speech);
+    }
+
+    notdefinedIntent(): void {
+        const speech = "bad request";
         this.handler.emit(":ask", speech, speech);
     }
 }

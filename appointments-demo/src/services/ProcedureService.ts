@@ -1,5 +1,5 @@
 import * as Alexa from "alexa-sdk";
-import { Elicit, Service } from "../models";
+import { AlexaResponse, Service } from "../models";
 import { ProcedureRepository } from "../repositories";
 
 // Procedure a.k.a Service
@@ -13,7 +13,7 @@ export class ProcedureService {
         this.procedureRepository = new ProcedureRepository();
     }
 
-    getRecommendedProcedures(services: Array<Service>): string {
+    getPopularProcedures(services: Array<Service>): string {
         const recommended = services.filter((x) => x.enabled && x.popular === true);
         if (recommended.length === 1) {
             return recommended.pop().value;
@@ -44,9 +44,9 @@ export class ProcedureService {
     async procedureElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean): Promise<void> {
         const services = await this.procedureRepository.findAll();
         const invalidSpeech = (invalid) ? `Unfortunately that's not a service I can identify.` : ``;
-        const repromptSpeech = `${invalidSpeech} Our most popular services are: ${this.getRecommendedProcedures(services)}. I've sent the complete list of services to your Alexa App. What service would you like to book?`;
+        const repromptSpeech = `${invalidSpeech} Our most popular services are: ${this.getPopularProcedures(services)}. I've sent the complete list of services to your Alexa App. What service would you like to book?`;
         console.info(repromptSpeech);
-        const elicit: Elicit = <Elicit>{
+        const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_SERVICE",
             repromptSpeech: repromptSpeech,
             speechOutput: (goFull || invalid) ? repromptSpeech : "What service would you like to book?",

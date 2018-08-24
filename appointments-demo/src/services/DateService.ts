@@ -1,6 +1,6 @@
 import * as Alexa from "alexa-sdk";
 import * as moment  from "moment";
-import { Elicit } from "../models";
+import { AlexaResponse } from "../models";
 import { DateRepository } from "../repositories";
 
 export class DateService {
@@ -30,7 +30,7 @@ export class DateService {
         const dates = "05/12/2018, 06/12/2018 and 07/12/2018";
         const invalidSpeech = (invalid) ? `I'm sorry, I couldn't find that date. You must provide an specific date` : ``;
         const repromptSpeech = `${invalidSpeech} I have some space on the following dates: ${dates}. I've sent a list of available dates to your Alexa App. What's your date preference for this appointment?,`;
-        const elicit: Elicit = <Elicit>{
+        const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_DATE",
             repromptSpeech: repromptSpeech,
             speechOutput: (goFull || invalid) ? repromptSpeech : "On what date would you like to book?",

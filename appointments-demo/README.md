@@ -1,6 +1,6 @@
 Andres Meza
 
-bst utter book an appointment on {CATOLICA HOSPITAL}
+bst utter bookIntent an appointment on {CATOLICA HOSPITAL}
 bst utter Book an {Cleaning} appointment with {Dr. Lopez} {tomorrow} at {14 hours} on the {CATOLICA HOSPITAL} office
 bst intend BookAppointmentInt SEL_SERVICE="Cleaning" SEL_ASSESSOR="Dr. Lopez" SEL_DATE="tomorrow" SEL_TIME="14 hours" SEL_BRANCH="CATOLICA HOSPITAL"
 

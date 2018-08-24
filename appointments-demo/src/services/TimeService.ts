@@ -1,6 +1,6 @@
 import * as Alexa from "alexa-sdk";
 import * as moment  from "moment";
-import { Elicit } from "../models";
+import { AlexaResponse } from "../models";
 import { TimeRepository } from "../repositories";
 
 export class TimeService {
@@ -30,7 +30,7 @@ export class TimeService {
         const times = "14:00, 14:30 and 15:00";
         const invalidSpeech = (invalid) ? `That doesn't look like a valid time` : ``;
         const repromptSpeech = `${invalidSpeech} Some available slots on this date are: ${times}. I've sent a list of available times for this day to your Alexa App. What is your time preference for this appointment,`;
-        const elicit: Elicit = <Elicit>{
+        const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_TIME",
             repromptSpeech: repromptSpeech,
             speechOutput: (goFull || invalid) ? repromptSpeech : "At what time would you like to book?",

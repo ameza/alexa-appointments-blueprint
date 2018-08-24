@@ -24,7 +24,7 @@ export interface WorldlyHelloResponse {
 
 // elicit
 
-export interface Elicit  {
+export interface AlexaResponse  {
     branches: string;
     slotToElicit: string;
     speechOutput: string;

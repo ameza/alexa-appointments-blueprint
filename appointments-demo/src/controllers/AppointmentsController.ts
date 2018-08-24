@@ -1,11 +1,11 @@
 import * as Alexa from "alexa-sdk";
 import * as moment  from "moment";
-import { AppointmentRequest, Assessor, Branch, Configuration, Elicit } from "../models";
+import { AppointmentRequest, Assessor, Branch, Configuration, AlexaResponse } from "../models";
 import { AppointmentService, AssessorService, BranchService, ConfigurationService, DateService, ProcedureService, TimeService } from "../services";
-import { IntentController } from "./IntentController";
+import { IntentController } from "./base/IntentController";
 
 
-class AppointmentsController extends IntentController {
+export class AppointmentsController extends IntentController {
 
     appointmentService: AppointmentService;
     assessorService: AssessorService;
@@ -64,7 +64,7 @@ class AppointmentsController extends IntentController {
         const dateText = (config.dateConfig === "G" || config.dateConfig === "N") ? "" : `Date`;
         const timeText = (config.timeConfig === "G" || config.timeConfig === "N") ? "" : `Time`;
         console.info(`pregunto con ${intentObj.slots.TO_FIX.value}`);
-        const elicit: Elicit = <Elicit>{
+        const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "TO_FIX",
             speechOutput: `What part of the appointment would you like to change: Location, ${timeText}, ${assessorText}, ${dateText} or Service ? You can also say cancel to discard the appointment`,
             cardContent: `Location, Service, Consultant, Date or time`,
@@ -108,6 +108,7 @@ class AppointmentsController extends IntentController {
             await this.handleBookIntentConfirmed(intentObj);
         }
     }
+
     // HELPERS
 
     // Checks if the user requested a fix
@@ -325,7 +326,7 @@ class AppointmentsController extends IntentController {
 
     // INTENT BODY
 
-    async book(): Promise<void> {
+    async bookIntent(): Promise<void> {
 
         const request: Alexa.IntentRequest = this.handler.event.request; // = fakeDialogState(this.handler.event.request);
         const intentObj = request.intent;
@@ -369,15 +370,7 @@ class AppointmentsController extends IntentController {
         }
     }
 
-    launch(): void {
-        const speech = "Welcome to Dental Office, this skill allows you to book appointments in our dental offices, start by saying book an appointment";
-        this.handler.emit(":ask", speech, speech);
-    }
 
-    nodefined(): void {
-        const speech = "bad request";
-        this.handler.emit(":ask", speech, speech);
-    }
 }
 
 export default AppointmentsController;
