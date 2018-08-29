@@ -18,7 +18,7 @@ export class TimeService {
         if (intentObj.slots.SEL_TIME.confirmationStatus === "DENIED") {
             this.timeElicit(intentObj, true, false);
         } else {
-            // Slot value is not confirmed
+            // Slot value is not successMatch
             const slotToConfirm = "SEL_TIME";
             const speechOutput = `You want to book at ${intentObj.slots.SEL_TIME.value}, is that correct?`;
             const repromptSpeech = speechOutput;

@@ -1,3 +1,5 @@
+import { SlotValue } from "alexa-sdk";
+
 export interface WorldlyHelloRequest {
     language: string;
 }
@@ -38,3 +40,7 @@ export interface AlexaResponse  {
     };
 }
 
+export interface MatchedSlot extends SlotValue {
+    successMatch: boolean;
+    realValue: string;
+}

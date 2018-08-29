@@ -31,6 +31,7 @@ export class BuiltInController extends IntentController {
     }
 
     launchIntent(): void {
+        this.handler.state = "BOOKING_MODE";
         const speech = "Welcome to Dental Office, this skill allows you to book appointments in our dental offices, start by saying book an appointment";
         this.handler.emit(":ask", speech, speech);
     }

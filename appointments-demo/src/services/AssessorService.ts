@@ -33,7 +33,7 @@ export class AssessorService {
         if (intentObj.slots.SEL_ASSESSOR.confirmationStatus === "DENIED") {
             await this.assessorElicit(intentObj, true, false);
         } else {
-            // Slot value is not confirmed
+            // Slot value is not successMatch
             const slotToConfirm = "SEL_ASSESSOR";
             const speechOutput = `You want to book with ${intentObj.slots.SEL_ASSESSOR.value}, is that correct?`;
             const repromptSpeech = speechOutput;

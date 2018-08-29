@@ -33,7 +33,7 @@ export class ProcedureService {
         if (intentObj.slots.SEL_SERVICE.confirmationStatus === "DENIED") {
             this.procedureElicit(intentObj, true, false);
         } else {
-            // Slot value is not confirmed
+            // Slot value is not successMatch
             const slotToConfirm = "SEL_SERVICE";
             const speechOutput = `You want the ${intentObj.slots.SEL_SERVICE.value} service, is that correct?`;
             const repromptSpeech = speechOutput;

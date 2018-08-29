@@ -1,4 +1,5 @@
 import * as Alexa from "alexa-sdk";
+import { SessionHelper } from "../helpers";
 import { AlexaResponse, Branch } from "../models";
 
 import {
@@ -7,12 +8,14 @@ import {
 
 export class BranchService {
 
+    sessionHelper: SessionHelper;
     branchRepository: BranchRepository;
     handler: Alexa.Handler<Alexa.Request>;
 
     constructor(handler: Alexa.Handler<Alexa.Request>) {
         this.handler = handler;
         this.branchRepository = new BranchRepository();
+        this.sessionHelper = new SessionHelper();
     }
 
     // BRANCH
@@ -55,9 +58,9 @@ export class BranchService {
         this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.repromptSpeech, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj);
     }
 
-    async branchListing() {
+    async branchListing(): Promise<void> {
         const branches = await this.branchRepository.findAll();
-        const repromptSpeech =  `You can say: book an appointment on... followed by your location of preference. Check your alexa app for the full list`;
+        const repromptSpeech = await this.getListingQuestionMessage();
         const speech = `Our most popular locations are: ${this.getPopularBranches(branches)}. I've sent the complete list of locations to the Alexa App. ${repromptSpeech}`;
 
         const alexaResponse: AlexaResponse = <AlexaResponse>{
@@ -68,7 +71,19 @@ export class BranchService {
         };
 
         this.handler.emit(":askWithCard",  alexaResponse.speechOutput, alexaResponse.repromptSpeech, alexaResponse.cardTitle, alexaResponse.cardContent, alexaResponse.imageObj);
+    }
 
+    async getListingQuestionMessage(): Promise<String> {
+        // we try to get the SEL BRANCH value from the BookAppointmentInt session
+        const slot = this.sessionHelper.getMatchedSlotValue(this.handler, "BookAppointmentIntent", "SEL_BRANCH");
+        // if branch in session
+        if (!!slot && slot.confirmationStatus === "CONFIRMED") {
+            return `I already have ${slot.realValue} for the appointment location, say "continue" to resume your booking, or "change location" to choose another location`;
+        }
+        else {
+          //  this.handler.state = "BRANCH_AGAIN_MODE";
+            return `Say continue to resume your booking`;
+        }
     }
 
     handleBranchSlotConfirmation(intentObj: Alexa.Intent): void {
@@ -79,7 +94,7 @@ export class BranchService {
         else {
             // Slot value is not confirmed
             const slotToConfirm = "SEL_BRANCH";
-            const speechOutput = `I heard you would like to book in our ${intentObj.slots.SEL_BRANCH.value} office, is that correct?`;
+            const speechOutput = `I heard you would like to book in our ${intentObj.slots.SEL_BRANCH.value} location, is that correct?`;
             const repromptSpeech = speechOutput;
             this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech);
         }

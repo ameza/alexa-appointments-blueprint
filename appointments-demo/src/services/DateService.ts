@@ -18,7 +18,7 @@ export class DateService {
         if (intentObj.slots.SEL_DATE.confirmationStatus === "DENIED") {
             this.dateElicit(intentObj, true, false);
         } else {
-            // Slot value is not confirmed
+            // Slot value is not successMatch
             const slotToConfirm = "SEL_DATE";
             const speechOutput = `You want to book on ${intentObj.slots.SEL_DATE.value}, is that correct?`;
             const repromptSpeech = speechOutput;

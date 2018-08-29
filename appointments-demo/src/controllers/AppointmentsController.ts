@@ -1,6 +1,6 @@
 import * as Alexa from "alexa-sdk";
 import * as moment  from "moment";
-import { AppointmentRequest, Assessor, Branch, Configuration, AlexaResponse } from "../models";
+import { AlexaResponse, AppointmentRequest, Assessor, Branch, Configuration } from "../models";
 import { AppointmentService, AssessorService, BranchService, ConfigurationService, DateService, ProcedureService, TimeService } from "../services";
 import { IntentController } from "./base/IntentController";
 
@@ -194,7 +194,7 @@ export class AppointmentsController extends IntentController {
 
         const intentObj = intentReq.intent;
 
-        if (intentReq.intent.confirmationStatus !== "DENIED" && (intentReq.dialogState === "STARTED" || intentReq.dialogState === undefined) && !this.handler.attributes["temp_" + intentReq.intent.name]) {
+        if (intentReq.intent.confirmationStatus !== "DENIED" && (intentReq.dialogState === "STARTED" || intentReq.dialogState === undefined) && !this.handler.attributes["temp_" + intentReq.intent.name] && intentObj.name === "BookAppointmentIntent") {
             console.info("Starting Clustering");
             // we check only the main fields
             const slotsToCheck = ["SEL_BRANCH", "SEL_SERVICE", "SEL_ASSESSOR", "SEL_DATE", "SEL_TIME"];
@@ -206,7 +206,7 @@ export class AppointmentsController extends IntentController {
                 if (intentObj.slots[item].value !== undefined && (intentObj.slots[item].confirmationStatus === "NONE" || intentObj.slots[item].confirmationStatus === undefined) ) {
                     let checkMatch: boolean = false;
                     // check if slot is a proper match
-                    if (intentObj.slots[item].resolutions) {
+                    if (intentObj.slots[item].resolutions && intentObj.slots[item].resolutions.resolutionsPerAuthority.length > 0) {
                         console.info(`Slot ${item} has resolutions`);
                         checkMatch = intentObj.slots[item].resolutions.resolutionsPerAuthority.some((res) => {
                             return res.status.code === "ER_SUCCESS_MATCH";

@@ -14,7 +14,6 @@ export class BranchController extends IntentController {
     }
 
     async branchListingIntent(): Promise<void> {
-
         await this.branchService.branchListing();
     }
 }
