@@ -1,4 +1,5 @@
 import * as Alexa from "alexa-sdk";
+import { SessionHelper } from "../helpers";
 import { AlexaResponse, Service } from "../models";
 import { ProcedureRepository } from "../repositories";
 
@@ -29,13 +30,41 @@ export class ProcedureService {
         return ` ${all.map( x => { return x.value; }).join("\r\n")}`;
     }
 
+    async procedureListing(): Promise<void> {
+
+        const procedures = await this.procedureRepository.findAll();
+        const repromptSpeech = await this.getListingQuestionMessage();
+        const speech = `We have the following services available: ${this.getPopularProcedures(procedures)}. I've sent the full list of services to the Alexa App. ${repromptSpeech}`;
+
+        const alexaResponse: AlexaResponse = <AlexaResponse>{
+            repromptSpeech: repromptSpeech,
+            speechOutput: speech,
+            cardContent: `${this.getFullProcedures(procedures)}`,
+            cardTitle: "Available Services",
+        };
+
+        this.handler.emit(":askWithCard",  alexaResponse.speechOutput, alexaResponse.repromptSpeech, alexaResponse.cardTitle, alexaResponse.cardContent,  alexaResponse.imageObj);
+    }
+
+    async getListingQuestionMessage(): Promise<String> {
+        // we try to get the SEL BRANCH value from the BookAppointmentInt session
+        const slot = SessionHelper.getMatchedSlotValue(this.handler, "BookAppointmentIntent", "SEL_SERVICE");
+        // if branch in session
+        if (!!slot && slot.confirmationStatus === "CONFIRMED") {
+            return `I have ${slot.realValue} as your desired service for this appointment, say "continue" to resume your booking, or "change service" to modify it`;
+        }
+        else {
+            return `Say continue to resume your booking`;
+        }
+    }
+
     handleProcedureSlotConfirmation(intentObj: Alexa.Intent): void {
         if (intentObj.slots.SEL_SERVICE.confirmationStatus === "DENIED") {
             this.procedureElicit(intentObj, true, false);
         } else {
             // Slot value is not successMatch
             const slotToConfirm = "SEL_SERVICE";
-            const speechOutput = `You want the ${intentObj.slots.SEL_SERVICE.value} service, is that correct?`;
+            const speechOutput = `You want the ${SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_SERVICE").realValue } service, is that correct?`;
             const repromptSpeech = speechOutput;
             this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech, intentObj);
         }
@@ -58,7 +87,7 @@ export class ProcedureService {
                   largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
               }*/
         };
-        console.info("intent before service elicit")
+        console.info("intent before service elicit");
         console.info(intentObj);
         this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.repromptSpeech, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj);
 

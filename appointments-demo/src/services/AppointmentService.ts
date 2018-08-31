@@ -24,7 +24,7 @@ export class AppointmentService {
                 const dateText = (request.selDate === "N/A") ? "" : `for ${request.selDate}`;
                 const timeText = (request.selTime === "N/A") ? "" : `at ${request.selTime}`;
 
-                const message = `I just booked a ${request.selService} appointment ${assessorText} ${dateText} ${timeText} on the ${request.selBranch} office. A confirmation notification has been sent to your email. Thanks`;
+                const message = `I just booked a ${request.selService} appointment ${assessorText} ${dateText} ${timeText} on the ${request.selBranch} office. A confirmation notification has been sent to your email. Thank you for using dental office`;
 
                 return <AppointmentResponse>{
                     text: `${message}`,

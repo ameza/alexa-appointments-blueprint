@@ -8,14 +8,12 @@ import {
 
 export class BranchService {
 
-    sessionHelper: SessionHelper;
     branchRepository: BranchRepository;
     handler: Alexa.Handler<Alexa.Request>;
 
     constructor(handler: Alexa.Handler<Alexa.Request>) {
         this.handler = handler;
         this.branchRepository = new BranchRepository();
-        this.sessionHelper = new SessionHelper();
     }
 
     // BRANCH
@@ -59,6 +57,7 @@ export class BranchService {
     }
 
     async branchListing(): Promise<void> {
+
         const branches = await this.branchRepository.findAll();
         const repromptSpeech = await this.getListingQuestionMessage();
         const speech = `Our most popular locations are: ${this.getPopularBranches(branches)}. I've sent the complete list of locations to the Alexa App. ${repromptSpeech}`;
@@ -75,10 +74,10 @@ export class BranchService {
 
     async getListingQuestionMessage(): Promise<String> {
         // we try to get the SEL BRANCH value from the BookAppointmentInt session
-        const slot = this.sessionHelper.getMatchedSlotValue(this.handler, "BookAppointmentIntent", "SEL_BRANCH");
+        const slot = SessionHelper.getMatchedSlotValue(this.handler, "BookAppointmentIntent", "SEL_BRANCH");
         // if branch in session
         if (!!slot && slot.confirmationStatus === "CONFIRMED") {
-            return `I already have ${slot.realValue} for the appointment location, say "continue" to resume your booking, or "change location" to choose another location`;
+            return `I have ${slot.realValue} as the appointment location, say "continue" to resume your booking, or "change location" to choose a different one`;
         }
         else {
           //  this.handler.state = "BRANCH_AGAIN_MODE";
@@ -94,7 +93,7 @@ export class BranchService {
         else {
             // Slot value is not confirmed
             const slotToConfirm = "SEL_BRANCH";
-            const speechOutput = `I heard you would like to book in our ${intentObj.slots.SEL_BRANCH.value} location, is that correct?`;
+            const speechOutput = `I heard you would like to book in ${SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_BRANCH").realValue }, is that correct?`;
             const repromptSpeech = speechOutput;
             this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech, intentObj);
         }

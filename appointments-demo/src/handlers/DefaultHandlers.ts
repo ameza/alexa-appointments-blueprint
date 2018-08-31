@@ -1,18 +1,19 @@
 import * as Alexa from "alexa-sdk";
-import { AppointmentsController, BranchController, BuiltInController } from "../controllers";
+import {AppointmentsController, AssessorController, BranchController, BuiltInController} from "../controllers";
+import {ProcedureController} from "../controllers/ProcedureController";
 
 export const DefaultHandlers = Alexa.CreateStateHandler("", {
     BookAppointmentIntent() {
         new AppointmentsController(this).bookIntent();
     },
     ServiceListingIntent() {
-        new BuiltInController(this).notdefinedIntent();
+        new ProcedureController(this).procedureListingIntent();
     },
     BranchListingIntent() {
         new BranchController(this).branchListingIntent();
     },
     AssessorListingIntent() {
-        new BuiltInController(this).notdefinedIntent();
+        new AssessorController(this).assessorListingIntent();
     },
     NextAvailableDateIntent() {
         new BuiltInController(this).notdefinedIntent();

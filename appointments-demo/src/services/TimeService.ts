@@ -14,13 +14,18 @@ export class TimeService {
 
     // TIME
 
+    timeFormatFixer(timeValue: string): string {
+        if (timeValue.length < 4)
+        return `${timeValue}:00`;
+    }
+
     handleTimeSlotConfirmation(intentObj: Alexa.Intent): void {
         if (intentObj.slots.SEL_TIME.confirmationStatus === "DENIED") {
             this.timeElicit(intentObj, true, false);
         } else {
             // Slot value is not successMatch
             const slotToConfirm = "SEL_TIME";
-            const speechOutput = `You want to book at ${intentObj.slots.SEL_TIME.value}, is that correct?`;
+            const speechOutput = `You want to book at ${this.timeFormatFixer(intentObj.slots.SEL_TIME.value)}, is that correct?`;
             const repromptSpeech = speechOutput;
             this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech, intentObj);
         }
@@ -29,7 +34,7 @@ export class TimeService {
     async timeElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean): Promise<void> {
         const times = "14:00, 14:30 and 15:00";
         const invalidSpeech = (invalid) ? `That doesn't look like a valid time` : ``;
-        const repromptSpeech = `${invalidSpeech} Some available slots on this date are: ${times}. I've sent a list of available times for this day to your Alexa App. What is your time preference for this appointment,`;
+        const repromptSpeech = `${invalidSpeech} Some available slots on this date are: ${times}. I've sent a list of available times for this day to your Alexa App. What is your time preference for this appointment?`;
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_TIME",
             repromptSpeech: repromptSpeech,

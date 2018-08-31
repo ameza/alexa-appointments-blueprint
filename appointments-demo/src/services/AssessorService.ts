@@ -1,5 +1,6 @@
 import * as Alexa from "alexa-sdk";
-import { Assessor, AlexaResponse } from "../models";
+import {SessionHelper} from "../helpers";
+import { AlexaResponse, Assessor } from "../models";
 import { AssessorRepository } from "../repositories";
 
 export class AssessorService {
@@ -29,13 +30,41 @@ export class AssessorService {
         return ` ${all.map( x => { return x.value; }).join("\r\n")}`;
     }
 
+    async assessorListing(): Promise<void> {
+
+        const assessors = await this.assessorRepository.findAll();
+        const repromptSpeech = await this.getListingQuestionMessage();
+        const speech = `Our most popular doctors are: ${this.getPopularAssessors(assessors)}. I've sent the full list of doctors to the Alexa App. ${repromptSpeech}`;
+
+        const alexaResponse: AlexaResponse = <AlexaResponse>{
+            repromptSpeech: repromptSpeech,
+            speechOutput: speech,
+            cardContent: `${this.getFullAssessors(assessors)}`,
+            cardTitle: "Available Doctors",
+        };
+
+        this.handler.emit(":askWithCard",  alexaResponse.speechOutput, alexaResponse.repromptSpeech, alexaResponse.cardTitle, alexaResponse.cardContent,  alexaResponse.imageObj);
+    }
+
+    async getListingQuestionMessage(): Promise<String> {
+        // we try to get the SEL BRANCH value from the BookAppointmentInt session
+        const slot = SessionHelper.getMatchedSlotValue(this.handler, "BookAppointmentIntent", "SEL_ASSESSOR");
+        // if branch in session
+        if (!!slot && slot.confirmationStatus === "CONFIRMED") {
+            return `I have ${slot.realValue} as your Doctor for this appointment, say "continue" to resume your booking, or "change assessor" to choose a different one`;
+        }
+        else {
+            return `Say continue to resume your booking`;
+        }
+    }
+
     async handleAssessorSlotConfirmation(intentObj: Alexa.Intent): Promise<void> {
         if (intentObj.slots.SEL_ASSESSOR.confirmationStatus === "DENIED") {
             await this.assessorElicit(intentObj, true, false);
         } else {
             // Slot value is not successMatch
             const slotToConfirm = "SEL_ASSESSOR";
-            const speechOutput = `You want to book with ${intentObj.slots.SEL_ASSESSOR.value}, is that correct?`;
+            const speechOutput = `You want to book with ${SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue }, is that correct?`;
             const repromptSpeech = speechOutput;
             this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech, intentObj);
         }

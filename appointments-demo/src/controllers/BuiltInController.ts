@@ -26,7 +26,7 @@ export class BuiltInController extends IntentController {
     }
 
     fallBackIntent(): void {
-        const speech = "Dental Office allows you to bookIntent appointments in our dental offices, start by saying bookIntent an appointment, if you are not sure about your available options just wait or check your alexa app";
+        const speech = "Dental Office allows you to bookIntent appointments in our dental offices, start by saying book an appointment, if you are not sure about your available options just wait or check your alexa app";
         this.handler.emit(":ask", speech, speech);
     }
 

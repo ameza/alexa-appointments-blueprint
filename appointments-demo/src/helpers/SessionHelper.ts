@@ -4,7 +4,7 @@ import { MatchedSlot } from "../models";
 
 export class SessionHelper {
 
-    getMatchedSlotValue  (handler: Alexa.Handler<Alexa.Request>, intentName: string, slotName: string): MatchedSlot {
+    static getMatchedSlotValue  (handler: Alexa.Handler<Alexa.Request>, intentName: string, slotName: string): MatchedSlot {
         let result: MatchedSlot = new MatchedSlot();
         const slotAttributes = handler.attributes["temp_" + intentName];
         if (slotAttributes) {

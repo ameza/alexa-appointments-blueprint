@@ -15,7 +15,6 @@ export class AppointmentsController extends IntentController {
     configurationService: ConfigurationService;
     dateService: DateService;
     timeService: TimeService;
-    sessionHelper: SessionHelper;
 
     constructor(handler: Alexa.Handler<Alexa.Request>) {
         super(handler);
@@ -26,8 +25,6 @@ export class AppointmentsController extends IntentController {
         this.configurationService = new ConfigurationService();
         this.dateService = new DateService(handler);
         this.timeService = new TimeService(handler);
-        this.sessionHelper = new SessionHelper();
-
     }
 
     // INTENT
@@ -36,9 +33,9 @@ export class AppointmentsController extends IntentController {
         console.log("in completed");
 
         const appointmentRequest: AppointmentRequest = {
-            selBranch: this.sessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_BRANCH").realValue,
-            selAssessor: this.sessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue,
-            selService: this.sessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_SERVICE").realValue,
+            selBranch: SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_BRANCH").realValue,
+            selAssessor: SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue,
+            selService: SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_SERVICE").realValue,
             selDate: intentObj.slots.SEL_DATE.value,
             selTime: intentObj.slots.SEL_TIME.value
         };
@@ -71,7 +68,7 @@ export class AppointmentsController extends IntentController {
             slotToElicit: "TO_FIX",
             speechOutput: `What part of the appointment would you like to change: Location, ${timeText}, ${assessorText}, ${dateText} or Service ? You can also say cancel to discard the appointment`,
             cardContent: `Location, Service, Consultant, Date or time`,
-            cardTitle: "Available Offices",
+            cardTitle: "Available Locations",
             updatedIntent: intentObj,
             /* imageObj: {
                  smallImageUrl: "https://imgs.xkcd.com/comics/standards.png",
@@ -88,11 +85,13 @@ export class AppointmentsController extends IntentController {
             if (intentObj.confirmationStatus !== "DENIED") {
                 // Intent is not confirmed
 
-                const assessorText = (intentObj.slots.SEL_ASSESSOR.value === "N/A") ? "" : `with ${intentObj.slots.SEL_ASSESSOR.value}`;
+                const branchText = SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_BRANCH").realValue;
+                const serviceText = SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_SERVICE").realValue;
+                const assessorText = (SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue === "N/A") ? "" : `with ${SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue}`;
                 const dateText = (intentObj.slots.SEL_DATE.value === "N/A") ? "" : `for ${intentObj.slots.SEL_DATE.value}`;
                 const timeText = (intentObj.slots.SEL_TIME.value === "N/A") ? "" : `at ${intentObj.slots.SEL_TIME.value} hours`;
 
-                const message = `You want to book an ${intentObj.slots.SEL_SERVICE.value} appointment ${assessorText} ${dateText} ${timeText} on the ${intentObj.slots.SEL_BRANCH.value} office`;
+                const message = `You want to book an ${serviceText} appointment ${assessorText} ${dateText} ${timeText} on ${branchText}`;
                 const speechOutput = `${message}, is that correct?`;
                 const cardTitle = "Booking Summary";
                 const repromptSpeech = speechOutput;
@@ -313,7 +312,8 @@ export class AppointmentsController extends IntentController {
             Object.keys(tempSlots).forEach(currentSlot => {
                 if (tempSlots[currentSlot].value) {
                     intentReq.intent.slots[currentSlot] = tempSlots[currentSlot];
-                    intentReq.intent.slots[currentSlot].confirmationStatus = tempSlots[currentSlot].confirmationStatus;
+                    // we don't restore denied intents
+                    intentReq.intent.slots[currentSlot].confirmationStatus =  tempSlots[currentSlot].confirmationStatus;
                     intentReq.intent.slots[currentSlot].resolutions = tempSlots[currentSlot].resolutions;
                 }
             }, this);
@@ -322,12 +322,14 @@ export class AppointmentsController extends IntentController {
         }
 
         // dealing with strange condition where the resolutions are lost after a continue request
-        console.info("restoring resolutions for confirmed fields");
+        console.info("restoring resolutions for confirmed or denied fields");
         let incomingSlots = intentReq.intent.slots;
         Object.keys(incomingSlots).forEach(currentSlot => {
-            if (incomingSlots[currentSlot].value && incomingSlots[currentSlot].confirmationStatus === "CONFIRMED" && incomingSlots[currentSlot].resolutions === undefined ) {
-                console.info(`resolution for ${incomingSlots[currentSlot].name} should come in request but was not found, restoring from session`);
-                const slotFromSession = this.sessionHelper.getMatchedSlotValue(this.handler, intentReq.intent.name, incomingSlots[currentSlot].name);
+            if (incomingSlots[currentSlot].value &&
+                (incomingSlots[currentSlot].confirmationStatus === "CONFIRMED" || incomingSlots[currentSlot].confirmationStatus === "DENIED") &&
+                incomingSlots[currentSlot].resolutions === undefined ) {
+                console.info(`resolution for ${incomingSlots[currentSlot].name} should have come in request but was not found, restoring from session`);
+                const slotFromSession = SessionHelper.getMatchedSlotValue(this.handler, intentReq.intent.name, incomingSlots[currentSlot].name);
                 if (slotFromSession && slotFromSession.resolutions) {
                     console.info(`${incomingSlots[currentSlot].name} slot found in session, restoring resolutions`);
                     incomingSlots[currentSlot].resolutions = slotFromSession.resolutions;
