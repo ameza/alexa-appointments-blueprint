@@ -1,5 +1,6 @@
 import * as Alexa from "alexa-sdk";
 import * as moment  from "moment";
+import {SessionHelper} from "../helpers";
 import { AlexaResponse, AppointmentRequest, Assessor, Branch, Configuration } from "../models";
 import { AppointmentService, AssessorService, BranchService, ConfigurationService, DateService, ProcedureService, TimeService } from "../services";
 import { IntentController } from "./base/IntentController";
@@ -14,6 +15,7 @@ export class AppointmentsController extends IntentController {
     configurationService: ConfigurationService;
     dateService: DateService;
     timeService: TimeService;
+    sessionHelper: SessionHelper;
 
     constructor(handler: Alexa.Handler<Alexa.Request>) {
         super(handler);
@@ -24,6 +26,7 @@ export class AppointmentsController extends IntentController {
         this.configurationService = new ConfigurationService();
         this.dateService = new DateService(handler);
         this.timeService = new TimeService(handler);
+        this.sessionHelper = new SessionHelper();
 
     }
 
@@ -33,9 +36,9 @@ export class AppointmentsController extends IntentController {
         console.log("in completed");
 
         const appointmentRequest: AppointmentRequest = {
-            selBranch: intentObj.slots.SEL_BRANCH.resolutions.resolutionsPerAuthority[0].values[0].value.name,
-            selAssessor: intentObj.slots.SEL_ASSESSOR.resolutions.resolutionsPerAuthority[0].values[0].value.name,
-            selService: intentObj.slots.SEL_SERVICE.resolutions.resolutionsPerAuthority[0].values[0].value.name,
+            selBranch: this.sessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_BRANCH").realValue,
+            selAssessor: this.sessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue,
+            selService: this.sessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_SERVICE").realValue,
             selDate: intentObj.slots.SEL_DATE.value,
             selTime: intentObj.slots.SEL_TIME.value
         };
@@ -76,7 +79,7 @@ export class AppointmentsController extends IntentController {
              }*/
         };
 
-        this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.speechOutput, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj);
+        this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.speechOutput, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj, intentObj);
 
     }
 
@@ -179,7 +182,7 @@ export class AppointmentsController extends IntentController {
                         intentObj.slots.SEL_BRANCH.confirmationStatus = "NONE";
                         intentObj.slots.SEL_BRANCH.value = undefined;
                         intentObj.slots.SEL_BRANCH.resolutions = undefined;
-                        await this.branchService.branchElicit(intentObj, true, false);
+                        await this.branchService.branchElicit(intentObj, false, false);
                     }
                     break;
                 default:
@@ -311,11 +314,28 @@ export class AppointmentsController extends IntentController {
                 if (tempSlots[currentSlot].value) {
                     intentReq.intent.slots[currentSlot] = tempSlots[currentSlot];
                     intentReq.intent.slots[currentSlot].confirmationStatus = tempSlots[currentSlot].confirmationStatus;
+                    intentReq.intent.slots[currentSlot].resolutions = tempSlots[currentSlot].resolutions;
                 }
             }, this);
             console.info("Done Recovery");
             console.info(intentReq.intent.slots);
         }
+
+        // dealing with strange condition where the resolutions are lost after a continue request
+        console.info("restoring resolutions for confirmed fields");
+        let incomingSlots = intentReq.intent.slots;
+        Object.keys(incomingSlots).forEach(currentSlot => {
+            if (incomingSlots[currentSlot].value && incomingSlots[currentSlot].confirmationStatus === "CONFIRMED" && incomingSlots[currentSlot].resolutions === undefined ) {
+                console.info(`resolution for ${incomingSlots[currentSlot].name} should come in request but was not found, restoring from session`);
+                const slotFromSession = this.sessionHelper.getMatchedSlotValue(this.handler, intentReq.intent.name, incomingSlots[currentSlot].name);
+                if (slotFromSession && slotFromSession.resolutions) {
+                    console.info(`${incomingSlots[currentSlot].name} slot found in session, restoring resolutions`);
+                    incomingSlots[currentSlot].resolutions = slotFromSession.resolutions;
+                    console.info(`successful restoring of ${incomingSlots[currentSlot].name} slot`);
+                }
+            }
+        });
+        intentReq.intent.slots = incomingSlots;
 
         console.info("Starting Save");
         this.handler.attributes["temp_" + intentReq.intent.name] = intentReq.intent;

@@ -1,4 +1,4 @@
-import { SlotValue } from "alexa-sdk";
+import {ConfirmationStatuses, Resolutions, SlotValue} from "alexa-sdk";
 
 export interface WorldlyHelloRequest {
     language: string;
@@ -40,7 +40,11 @@ export interface AlexaResponse  {
     };
 }
 
-export interface MatchedSlot extends SlotValue {
+export class MatchedSlot implements SlotValue {
     successMatch: boolean;
     realValue: string;
+    confirmationStatus: ConfirmationStatuses;
+    name: string;
+    resolutions: Resolutions;
+    value: any;
 }

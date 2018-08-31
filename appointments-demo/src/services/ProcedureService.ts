@@ -37,7 +37,7 @@ export class ProcedureService {
             const slotToConfirm = "SEL_SERVICE";
             const speechOutput = `You want the ${intentObj.slots.SEL_SERVICE.value} service, is that correct?`;
             const repromptSpeech = speechOutput;
-            this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech);
+            this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech, intentObj);
         }
     }
 
@@ -58,7 +58,8 @@ export class ProcedureService {
                   largeImageUrl: "https://imgs.xkcd.com/comics/standards.png"
               }*/
         };
-
+        console.info("intent before service elicit")
+        console.info(intentObj);
         this.handler.emit(":elicitSlotWithCard", elicit.slotToElicit, elicit.speechOutput, elicit.repromptSpeech, elicit.cardTitle, elicit.cardContent, elicit.updatedIntent, elicit.imageObj);
 
     }

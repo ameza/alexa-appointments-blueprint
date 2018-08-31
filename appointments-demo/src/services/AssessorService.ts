@@ -37,7 +37,7 @@ export class AssessorService {
             const slotToConfirm = "SEL_ASSESSOR";
             const speechOutput = `You want to book with ${intentObj.slots.SEL_ASSESSOR.value}, is that correct?`;
             const repromptSpeech = speechOutput;
-            this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech);
+            this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech, intentObj);
         }
     }
 

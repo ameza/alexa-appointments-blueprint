@@ -70,7 +70,7 @@ export class BranchService {
             cardTitle: "Available Offices / Locations",
         };
 
-        this.handler.emit(":askWithCard",  alexaResponse.speechOutput, alexaResponse.repromptSpeech, alexaResponse.cardTitle, alexaResponse.cardContent, alexaResponse.imageObj);
+        this.handler.emit(":askWithCard",  alexaResponse.speechOutput, alexaResponse.repromptSpeech, alexaResponse.cardTitle, alexaResponse.cardContent,  alexaResponse.imageObj);
     }
 
     async getListingQuestionMessage(): Promise<String> {
@@ -96,7 +96,7 @@ export class BranchService {
             const slotToConfirm = "SEL_BRANCH";
             const speechOutput = `I heard you would like to book in our ${intentObj.slots.SEL_BRANCH.value} location, is that correct?`;
             const repromptSpeech = speechOutput;
-            this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech);
+            this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech, intentObj);
         }
     }
 

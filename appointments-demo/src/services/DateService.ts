@@ -22,7 +22,7 @@ export class DateService {
             const slotToConfirm = "SEL_DATE";
             const speechOutput = `You want to book on ${intentObj.slots.SEL_DATE.value}, is that correct?`;
             const repromptSpeech = speechOutput;
-            this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech);
+            this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech, intentObj);
         }
     }
 

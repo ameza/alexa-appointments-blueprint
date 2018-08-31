@@ -5,15 +5,16 @@ import { MatchedSlot } from "../models";
 export class SessionHelper {
 
     getMatchedSlotValue  (handler: Alexa.Handler<Alexa.Request>, intentName: string, slotName: string): MatchedSlot {
-        let result: MatchedSlot = undefined;
+        let result: MatchedSlot = new MatchedSlot();
         const slotAttributes = handler.attributes["temp_" + intentName];
         if (slotAttributes) {
             let tempSlots = slotAttributes.slots;
 
             Object.keys(tempSlots).forEach(currentSlot => {
                 if (tempSlots[currentSlot].name === slotName) {
-                    result = tempSlots[currentSlot];
+                    result.resolutions = tempSlots[currentSlot].resolutions;
                     result.confirmationStatus = tempSlots[currentSlot].confirmationStatus;
+                    result.value = tempSlots[currentSlot].value;
                 }
             }, this);
 
