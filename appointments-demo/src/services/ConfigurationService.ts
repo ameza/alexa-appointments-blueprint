@@ -1,17 +1,15 @@
-import { sequelizeInstance } from "../database/database.provider";
-import { Configuration } from "../models/";
+import * as Alexa from "alexa-sdk";
+import { Configuration } from "../models";
+import { ConfigurationRepository } from "../repositories";
 
 export class ConfigurationService {
-
-    private readonly sequelizeInstance;
+    configurationRepository: ConfigurationRepository;
 
     constructor() {
-        this.sequelizeInstance = sequelizeInstance();
-
+        this.configurationRepository = new ConfigurationRepository();
     }
 
-    public async findOne(): Promise<Configuration> {
-        return await Configuration.findOne<Configuration>({raw: false});
+    async getModelConfiguration(): Promise<Configuration> {
+        return await this.configurationRepository.findOne();
     }
 }
-

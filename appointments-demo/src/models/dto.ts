@@ -1,3 +1,5 @@
+import {ConfirmationStatuses, Resolutions, SlotValue} from "alexa-sdk";
+
 export interface WorldlyHelloRequest {
     language: string;
 }
@@ -22,5 +24,27 @@ export interface WorldlyHelloResponse {
     ssml: string;
 }
 
-// assessor
+// elicit
 
+export interface AlexaResponse  {
+    branches: string;
+    slotToElicit: string;
+    speechOutput: string;
+    repromptSpeech: string;
+    cardContent: string;
+    cardTitle: string;
+    updatedIntent: any;
+    imageObj: {
+        smallImageUrl: string;
+        largeImageUrl: string;
+    };
+}
+
+export class MatchedSlot implements SlotValue {
+    successMatch: boolean;
+    realValue: string;
+    confirmationStatus: ConfirmationStatuses;
+    name: string;
+    resolutions: Resolutions;
+    value: any;
+}

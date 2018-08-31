@@ -4,7 +4,7 @@
   "description": "An opinionated boilerplate for Alexa Skills Kit development using TypeScript, Webpack, Bespoken Tools",
   "main": "index.js",
   "engines": {
-    "node": ">=8.10"
+    "node": ">=8.11.3"
   },
   "keywords": [
     "alexa",
@@ -28,11 +28,11 @@
     "ts-loader": "^4.2.0",
     "ts-node": "6.0.0",
     "tslint": "^5.9.1",
-    "typescript": "^2.8.3"
+    "typescript": "^2.8.3",
+    "aws-sdk": "^2.7.21"
   },
   "dependencies": {
     "alexa-sdk": "^1.0.4",
-    "aws-sdk": "^2.7.21",
     "bespoken-tools": "1.2.8",
     "dotenv": "^5.0.1",
     "es6-promise": "^4.0.5",
@@ -51,7 +51,6 @@
     "url": "https://github.com/bespoken/alexa-skills-kit-nodejs-lambda-boilerplate"
   },
   "scripts": {
-    "postinstall": "",
     "lint": "tslint 'src/**/*.{ts,tsx}' -e **/*.scss.d.ts",
     "postversion": "git push && git push --tags",
     "preftest": "webpack && npm run pretest",
@@ -62,8 +61,11 @@
     "coverage": "istanbul cover --include-all-sources --root dist/ -x \"**/*test.js\" -x \"assets/MockHandler.js\" _mocha \"dist/**/*.test.js\" -- --require ignore-styles -R spec && remap-istanbul -i ./coverage/coverage.json -o ./coverage/ts-report -t html && ./node_modules/.bin/remap-istanbul -i coverage/coverage.json -t lcovonly > coverage/lcov-ts.info",
     "coveralls": "npm run coverage && ./node_modules/coveralls/bin/coveralls.js < coverage/lcov-ts.info",
     "start": "node ./node_modules/bespoken-tools/bin/bst-proxy.js lambda index.js",
-    "build": "rm -rf ./dist & tsc -w",
-    "predeploy": "rm -rf ./dist & tsc",
-    "deploy": "node ./node_modules/bespoken-tools/bin/bst-deploy.js lambda . --lambdaName appointments"
+    "clean": "rm -rf ./dist",
+    "build": "npm install && npm run clean && tsc",
+    "build-watch": "npm run clean && tsc -w",
+    "predeploy": "npm run build && npm prune --production",
+    "deploy": "node ./node_modules/bespoken-tools/bin/bst-deploy.js lambda . --lambdaName appointments --verbose",
+    "postdeploy": "npm install"
   }
 }
