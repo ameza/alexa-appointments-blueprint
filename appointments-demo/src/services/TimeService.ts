@@ -32,7 +32,8 @@ export class TimeService {
         const times = "14:00, 14:30 and 15:00";
         const invalidSpeech = (indicatePreviousMatchInvalid) ? (previousMatchInvalidMessage === "") ? `That doesn't look like a valid time` : previousMatchInvalidMessage : ``;
         const questionSpeech = `What is your time preference for this appointment?`;
-        const repromptSpeech = `${invalidSpeech} Some available slots on this date are: ${times}. I've sent a list of available times for this day to your Alexa App. ${questionSpeech}`;
+        const allItemsSpeech = `Some available slots on this date are: ${times}. I've sent a list of available times for this day to your Alexa App.`;
+        const repromptSpeech = `${invalidSpeech} ${(listAllItems) ? allItemsSpeech : "" }  ${questionSpeech}`;
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_TIME",
             repromptSpeech: repromptSpeech,

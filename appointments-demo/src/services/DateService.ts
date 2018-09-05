@@ -1,8 +1,8 @@
 import * as Alexa from "alexa-sdk";
 import * as moment  from "moment";
 import { AlexaResponse } from "../models";
+import { AppointmentRequest, ElementRules} from "../models/dto";
 import { DateRepository } from "../repositories";
-import {AppointmentRequest, ElementRules} from "../models/dto";
 
 export class DateService {
     dateRepository: DateRepository;
@@ -31,8 +31,9 @@ export class DateService {
         const dates = "05/12/2018, 06/12/2018 and 07/12/2018";
         const invalidSpeech = (indicatePreviousMatchInvalid) ? (previousMatchInvalidMessage === "") ? `I'm sorry, I couldn't find that date. You must provide an specific date` : previousMatchInvalidMessage : ``;
         // TODO: add randomize to question
-        const questionSpeech =  "On what date would you like to book?"
-        const repromptSpeech = `${invalidSpeech} I have some space on the following dates: ${dates}. I've sent a list of available dates to your Alexa App. ${questionSpeech}`;
+        const questionSpeech =  "On what date would you like to book?";
+        const listAllSpeech = `I have some space on the following dates: ${dates}. I've sent a list of available dates to your Alexa App.`;
+        const repromptSpeech = `${invalidSpeech} ${(listAllItems) ? listAllSpeech : "" }  ${questionSpeech}`;
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_DATE",
             repromptSpeech: repromptSpeech,

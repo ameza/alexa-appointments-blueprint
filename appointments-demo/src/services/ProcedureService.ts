@@ -1,8 +1,8 @@
 import * as Alexa from "alexa-sdk";
 import { SessionHelper } from "../helpers";
 import { AlexaResponse, Service } from "../models";
-import { ProcedureRepository } from "../repositories";
 import {AppointmentRequest, ElementRules} from "../models/dto";
+import { ProcedureRepository } from "../repositories";
 
 // Procedure a.k.a Service
 export class ProcedureService {
@@ -75,8 +75,9 @@ export class ProcedureService {
         const services = await this.procedureRepository.findAll();
         const invalidSpeech = (indicatePreviousMatchInvalid) ? (previousMatchInvalidMessage === "") ? `Unfortunately that's not a service I can identify.` : previousMatchInvalidMessage : ``;
         // TODO: add randomize to question
-        const questionSpeech = `What service would you like to book?`
-        const repromptSpeech = `${invalidSpeech} Our most popular services are: ${this.getPopularProcedures(services)}. I've sent the complete list of services to your Alexa App. ${questionSpeech}`;
+        const questionSpeech = `What service would you like to book?`;
+        const listAllSpeech = `Our most popular services are: ${this.getPopularProcedures(services)}. I've sent the complete list of services to your Alexa App.`;
+        const repromptSpeech = `${invalidSpeech} ${(listAllItems) ? listAllSpeech : "" }  ${questionSpeech}`;
         console.info(repromptSpeech);
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_SERVICE",

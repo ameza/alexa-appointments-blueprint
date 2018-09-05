@@ -75,31 +75,31 @@ export class AppointmentsController extends IntentController {
                         intentObj.slots.SEL_BRANCH.confirmationStatus = "NONE";
                         intentObj.slots.SEL_BRANCH.value = undefined;
                         intentObj.slots.SEL_BRANCH.resolutions = undefined;
-                        await this.branchService.branchElicit(intentObj, false, false, message);
+                        await this.branchService.branchElicit(intentObj, false, true, message);
                         break;
                     case "SEL_SERVICE":
                         intentObj.slots.SEL_SERVICE.confirmationStatus = "NONE";
                         intentObj.slots.SEL_SERVICE.value = undefined;
                         intentObj.slots.SEL_SERVICE.resolutions = undefined;
-                        await this.procedureService.procedureElicit(intentObj, false, false, message);
+                        await this.procedureService.procedureElicit(intentObj, false, true, message);
                         break;
                     case "SEL_ASSESSOR":
                         intentObj.slots.SEL_ASSESSOR.confirmationStatus = "NONE";
                         intentObj.slots.SEL_ASSESSOR.value = undefined;
                         intentObj.slots.SEL_ASSESSOR.resolutions = undefined;
-                        await this.assessorService.assessorElicit(intentObj, false, false, message);
+                        await this.assessorService.assessorElicit(intentObj, false, true, message);
                         break;
                     case "SEL_DATE":
                         intentObj.slots.SEL_DATE.confirmationStatus = "NONE";
                         intentObj.slots.SEL_DATE.value = undefined;
                         intentObj.slots.SEL_DATE.resolutions = undefined;
-                        await this.dateService.dateElicit(intentObj, false, false, message);
+                        await this.dateService.dateElicit(intentObj, false, true, message);
                         break;
                     case "SEL_TIME":
                         intentObj.slots.SEL_TIME.confirmationStatus = "NONE";
                         intentObj.slots.SEL_TIME.value = undefined;
                         intentObj.slots.SEL_TIME.resolutions = undefined;
-                        await this.timeService.timeElicit(intentObj, false, false, message);
+                        await this.timeService.timeElicit(intentObj, false, true, message);
                         break;
                     default:
                         console.info("invalid element to fix upon booking");

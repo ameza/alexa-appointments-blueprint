@@ -39,7 +39,8 @@ export class BranchService {
         const branches = await this.branchRepository.findAll();
         const invalidSpeech = (indicatePreviousMatchInvalid) ?  (previousMatchInvalidMessage === "") ? `I couldn't match that with any of our locations.` : previousMatchInvalidMessage : ``;
         const questionSpeech =  `Where would you like to book your appointment?`;
-        const repromptSpeech = `${invalidSpeech} Our most popular locations are: ${this.getPopularBranches(branches)}. I've sent the complete list of locations to the Alexa App. ${questionSpeech}`;
+        const listAllSpeech = `Our most popular locations are: ${this.getPopularBranches(branches)}. I've sent the complete list of locations to the Alexa App.`;
+        const repromptSpeech = `${invalidSpeech} ${(listAllItems) ? listAllSpeech : "" }  ${questionSpeech}`;
 
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_BRANCH",

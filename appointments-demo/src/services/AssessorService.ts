@@ -75,8 +75,9 @@ export class AssessorService {
         const assessors = await this.assessorRepository.findAll();
         const invalidSpeech = (indicatePreviousMatchInvalid) ? (previousMatchInvalidMessage === "") ? `I'm sorry, I couldn't find that assessor.` : previousMatchInvalidMessage : ``;
         // TODO: add randomize to question
-        const questionSpeech = `Who would you like to assist you?`
-        const repromptSpeech = `${invalidSpeech} Currently we have the following assessors available: ${ this.getPopularAssessors(assessors)}. I've sent the complete list of assessors to your Alexa App. ${questionSpeech}`;
+        const questionSpeech = `Who would you like to assist you?`;
+        const listAllSpeech = `Currently we have the following assessors available: ${ this.getPopularAssessors(assessors)}. I've sent the complete list of assessors to your Alexa App.`;
+        const repromptSpeech = `${invalidSpeech} ${(listAllItems) ? listAllSpeech : "" }  ${questionSpeech}`;
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_ASSESSOR",
             repromptSpeech: repromptSpeech,
