@@ -24,6 +24,22 @@ export interface WorldlyHelloResponse {
     ssml: string;
 }
 
+export interface ElementRules {
+    name: string;
+    valid: boolean;
+    reason: string;
+}
+
+export interface AvailabilityResponse {
+    elementToFix: ElementRules;
+    message: string;
+    proceedBooking: boolean;
+}
+
+export interface RuleCheckResult {
+    valid: boolean;
+    message: string;
+}
 // elicit
 
 export interface AlexaResponse  {

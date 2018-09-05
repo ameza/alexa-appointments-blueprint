@@ -1,6 +1,5 @@
 import * as Alexa from "alexa-sdk";
-import * as moment  from "moment";
-import {SessionHelper} from "../helpers";
+import { SessionHelper, UtilityHelpers } from "../helpers";
 import { AlexaResponse, AppointmentRequest, Assessor, Branch, Configuration } from "../models";
 import { AppointmentService, AssessorService, BranchService, ConfigurationService, DateService, ProcedureService, TimeService } from "../services";
 import { IntentController } from "./base/IntentController";
@@ -29,31 +28,91 @@ export class AppointmentsController extends IntentController {
 
     // INTENT
 
-    handleBookIntentConfirmed(intentObj: Alexa.Intent): void {
+    async handleBookIntentConfirmed(intentObj: Alexa.Intent): Promise<void> {
         console.log("in completed");
 
         const appointmentRequest: AppointmentRequest = {
             selBranch: SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_BRANCH").realValue,
             selAssessor: SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue,
             selService: SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_SERVICE").realValue,
-            selDate: intentObj.slots.SEL_DATE.value,
-            selTime: intentObj.slots.SEL_TIME.value
+            selDate:  intentObj.slots.SEL_DATE.value,
+            selTime: UtilityHelpers.formatTime(intentObj.slots.SEL_TIME.value)
         };
         // Dialog is now complete and all required slots should be filled,
         // so call your normal intent handler.
-        this.appointmentService.book(appointmentRequest).then((response) => {
 
-            let ssml = response.ssml;
-            // We need to clean the <speak> tags because
-            // alexa-sdk adds them
-            ssml = ssml.replace("<speak>", "");
-            ssml = ssml.replace("</speak>", "");
+        let message = "";
+        try {
 
-            this.handler.emit(":tellWithCard", ssml, ssml, "Booked!!");
-        }).catch((error) => {
-            console.error(error);
-            this.handler.emit(":tell", "Error on appointment service" + error);
-        });
+            const rules = await this.appointmentService.checkAppointmentRules(appointmentRequest);
+
+            if (rules.proceedBooking) {
+
+                const appointment = await this.appointmentService.create(appointmentRequest);
+                console.info(appointment);
+                if (appointment.dataValues.id) {
+
+
+                    const assessorText = (appointmentRequest.selAssessor === "N/A") ? "" : `with ${appointmentRequest.selAssessor}`;
+                    const dateText = (appointmentRequest.selDate === "N/A") ? "" : `for ${appointmentRequest.selDate}`;
+                    const timeText = (appointmentRequest.selTime === "N/A") ? "" : `at ${appointmentRequest.selTime}`;
+
+                    const message = `I just booked a ${appointmentRequest.selService} appointment ${assessorText} ${dateText} ${timeText} on the ${appointmentRequest.selBranch} office. A confirmation notification has been sent to your email. Thank you for using dental office`;
+
+                    this.handler.emit(":tellWithCard", message, message, "Booked!!");
+                }
+                else {
+                    message = "I'm sorry, but I couldn't book your appointment, there was an internal error";
+
+                    this.handler.emit(":tellWithCard", message, message, "Booked!!");
+                }
+            }
+            else {
+                message = `I'm sorry, but I couldn't book your appointment, ${rules.message}`;
+                intentObj.confirmationStatus = "NONE";
+                switch (rules.elementToFix.name) {
+                    case "SEL_BRANCH":
+                        intentObj.slots.SEL_BRANCH.confirmationStatus = "NONE";
+                        intentObj.slots.SEL_BRANCH.value = undefined;
+                        intentObj.slots.SEL_BRANCH.resolutions = undefined;
+                        await this.branchService.branchElicit(intentObj, false, true, message);
+                        break;
+                    case "SEL_SERVICE":
+                        intentObj.slots.SEL_SERVICE.confirmationStatus = "NONE";
+                        intentObj.slots.SEL_SERVICE.value = undefined;
+                        intentObj.slots.SEL_SERVICE.resolutions = undefined;
+                        await this.procedureService.procedureElicit(intentObj, false, true, message);
+                        break;
+                    case "SEL_ASSESSOR":
+                        intentObj.slots.SEL_ASSESSOR.confirmationStatus = "NONE";
+                        intentObj.slots.SEL_ASSESSOR.value = undefined;
+                        intentObj.slots.SEL_ASSESSOR.resolutions = undefined;
+                        await this.assessorService.assessorElicit(intentObj, false, true, message);
+                        break;
+                    case "SEL_DATE":
+                        intentObj.slots.SEL_DATE.confirmationStatus = "NONE";
+                        intentObj.slots.SEL_DATE.value = undefined;
+                        intentObj.slots.SEL_DATE.resolutions = undefined;
+                        await this.dateService.dateElicit(intentObj, false, true, message);
+                        break;
+                    case "SEL_TIME":
+                        intentObj.slots.SEL_TIME.confirmationStatus = "NONE";
+                        intentObj.slots.SEL_TIME.value = undefined;
+                        intentObj.slots.SEL_TIME.resolutions = undefined;
+                        await this.timeService.timeElicit(intentObj, false, true, message);
+                        break;
+                    default:
+                        console.info("invalid element to fix upon booking");
+                }
+            }
+        }
+        catch (ex) {
+            message = "I'm sorry, but I couldn't book your appointment, there was an internal error";
+            console.error(ex);
+            this.handler.emit(":tellWithCard", message, message, "Booked!!");
+        }
+
+
     }
 
     async handleBookIntentDenial(intentObj: Alexa.Intent): Promise<void> {
@@ -89,7 +148,7 @@ export class AppointmentsController extends IntentController {
                 const serviceText = SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_SERVICE").realValue;
                 const assessorText = (SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue === "N/A") ? "" : `with ${SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue}`;
                 const dateText = (intentObj.slots.SEL_DATE.value === "N/A") ? "" : `for ${intentObj.slots.SEL_DATE.value}`;
-                const timeText = (intentObj.slots.SEL_TIME.value === "N/A") ? "" : `at ${intentObj.slots.SEL_TIME.value} hours`;
+                const timeText = (intentObj.slots.SEL_TIME.value === "N/A") ? "" : `at ${ UtilityHelpers.formatTime(intentObj.slots.SEL_TIME.value)} `;
 
                 const message = `You want to book an ${serviceText} appointment ${assessorText} ${dateText} ${timeText} on ${branchText}`;
                 const speechOutput = `${message}, is that correct?`;
@@ -388,7 +447,7 @@ export class AppointmentsController extends IntentController {
             await this.timeService.handleTimeMatch(intentObj);
         } else {
             request.dialogState = "COMPLETED";
-            this.handleBookIntentConfirmation(intentObj);
+            await this.handleBookIntentConfirmation(intentObj);
         }
     }
 

@@ -2,6 +2,7 @@ import * as Alexa from "alexa-sdk";
 import * as moment  from "moment";
 import { AlexaResponse } from "../models";
 import { DateRepository } from "../repositories";
+import {AppointmentRequest, ElementRules} from "../models/dto";
 
 export class DateService {
     dateRepository: DateRepository;
@@ -26,9 +27,9 @@ export class DateService {
         }
     }
 
-    async dateElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean): Promise<void> {
+    async dateElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean, previousMatchInvalidMessage: string = ""): Promise<void> {
         const dates = "05/12/2018, 06/12/2018 and 07/12/2018";
-        const invalidSpeech = (invalid) ? `I'm sorry, I couldn't find that date. You must provide an specific date` : ``;
+        const invalidSpeech = (invalid) ? (previousMatchInvalidMessage === "") ? `I'm sorry, I couldn't find that date. You must provide an specific date` : previousMatchInvalidMessage : ``;
         const repromptSpeech = `${invalidSpeech} I have some space on the following dates: ${dates}. I've sent a list of available dates to your Alexa App. What's your date preference for this appointment?,`;
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_DATE",
@@ -64,5 +65,20 @@ export class DateService {
         else {
             await this.dateElicit(intentObj, false, false);
         }
+    }
+
+    public checkDateRules(request: AppointmentRequest): ElementRules {
+        const dateViability: ElementRules = {
+            name: "SEL_DATE",
+            reason: "",
+            valid: true
+        };
+        if (request.selDate !== "N/A") {
+            // check SEL_DATE possible in SEL_BRANCH
+            // check SEL_DATE possible in SEL_SERVICE
+            // check SEL_DATE possible in SEL_ASSESSOR
+            // check SEL_DATE possible in SEL_TIME
+        }
+        return dateViability;
     }
 }

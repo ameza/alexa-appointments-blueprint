@@ -30,7 +30,7 @@ export class SessionHelper {
                         result.resolutions.resolutionsPerAuthority[0].values[0] &&
                         result.resolutions.resolutionsPerAuthority[0].values[0].value &&
                         result.resolutions.resolutionsPerAuthority[0].values[0].value.name)
-                    result.realValue = result.resolutions.resolutionsPerAuthority[0].values[0].value.name;
+                        result.realValue = result.resolutions.resolutionsPerAuthority[0].values[0].value.name;
                 }
             }
             return result;

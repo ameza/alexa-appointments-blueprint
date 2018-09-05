@@ -2,6 +2,7 @@ import * as Alexa from "alexa-sdk";
 import { SessionHelper } from "../helpers";
 import { AlexaResponse, Service } from "../models";
 import { ProcedureRepository } from "../repositories";
+import {AppointmentRequest, ElementRules} from "../models/dto";
 
 // Procedure a.k.a Service
 export class ProcedureService {
@@ -70,9 +71,9 @@ export class ProcedureService {
         }
     }
 
-    async procedureElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean): Promise<void> {
+    async procedureElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean, previousMatchInvalidMessage: string = ""): Promise<void> {
         const services = await this.procedureRepository.findAll();
-        const invalidSpeech = (invalid) ? `Unfortunately that's not a service I can identify.` : ``;
+        const invalidSpeech = (invalid) ? (previousMatchInvalidMessage === "") ? `Unfortunately that's not a service I can identify.` : previousMatchInvalidMessage : ``;
         const repromptSpeech = `${invalidSpeech} Our most popular services are: ${this.getPopularProcedures(services)}. I've sent the complete list of services to your Alexa App. What service would you like to book?`;
         console.info(repromptSpeech);
         const elicit: AlexaResponse = <AlexaResponse>{
@@ -110,5 +111,20 @@ export class ProcedureService {
         else {
             await this.procedureElicit(intentObj, false, false);
         }
+    }
+
+    public checkProcedureRules(request: AppointmentRequest): ElementRules {
+        const procedureViability: ElementRules = {
+            name: "SEL_SERVICE",
+            reason: "",
+            valid: true
+        };
+        if (request.selService !== "N/A") {
+            // check SEL_SERVICE possible in SEL_BRANCH
+            // check SEL_SERVICE possible in SEL_ASSESSOR
+            // check SEL_SERVICE possible in DATE
+            // check SEL_SERVICE possible in TIME
+        }
+        return procedureViability;
     }
 }

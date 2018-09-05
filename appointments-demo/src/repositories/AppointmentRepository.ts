@@ -14,8 +14,6 @@ export class AppointmentRepository {
 
     }
 
-
-
     public async create(appointmentRequest: AppointmentRequest): Promise<Appointment> {
         return await this.sequelizeInstance.transaction(async transaction => {
             return await Appointment.create<Appointment>({

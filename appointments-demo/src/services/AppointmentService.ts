@@ -1,51 +1,100 @@
 import * as Alexa from "alexa-sdk";
-import {AppointmentRequest, AppointmentResponse} from "../models/dto";
+import { Appointment } from "../models";
+import { AppointmentRequest, AppointmentResponse, AvailabilityResponse, ElementRules} from "../models/dto";
 import { AppointmentRepository } from "../repositories";
+import {
+    AssessorService,
+    BranchService,
+    ConfigurationService,
+    DateService,
+    ProcedureService,
+    TimeService
+} from "./index";
 
 export class AppointmentService {
 
+    assessorService: AssessorService;
+    procedureService: ProcedureService;
+    branchService: BranchService;
+    configurationService: ConfigurationService;
+    dateService: DateService;
+    timeService: TimeService;
     appointmentRepository: AppointmentRepository;
     handler: Alexa.Handler<Alexa.Request>;
 
     constructor(handler: Alexa.Handler<Alexa.Request>) {
         this.handler = handler;
         this.appointmentRepository = new AppointmentRepository();
+        this.assessorService = new AssessorService(handler);
+        this.procedureService = new ProcedureService(handler);
+        this.branchService = new BranchService(handler);
+        this.configurationService = new ConfigurationService();
+        this.dateService = new DateService(handler);
+        this.timeService = new TimeService(handler);
     }
-    public async book(request: AppointmentRequest): Promise<AppointmentResponse> {
+    public async create(request): Promise<Appointment> {
+       return  await this.appointmentRepository.create(request);
+    }
 
-        let message = "";
-        try {
-            const appointment = await this.appointmentRepository.create(request);
-            console.info(appointment);
-            if (appointment.dataValues.id) {
+    public async checkAppointmentRules(request: AppointmentRequest): Promise<AvailabilityResponse> {
+        let availability: AvailabilityResponse = { elementToFix: undefined, message: "", proceedBooking: true };
 
-
-                const assessorText = (request.selAssessor === "N/A") ? "" : `with ${request.selAssessor}`;
-                const dateText = (request.selDate === "N/A") ? "" : `for ${request.selDate}`;
-                const timeText = (request.selTime === "N/A") ? "" : `at ${request.selTime}`;
-
-                const message = `I just booked a ${request.selService} appointment ${assessorText} ${dateText} ${timeText} on the ${request.selBranch} office. A confirmation notification has been sent to your email. Thank you for using dental office`;
-
-                return <AppointmentResponse>{
-                    text: `${message}`,
-                    ssml: `<speak>${message}</speak>`
-                };
+        // check each element for Viability
+        const branchRules = this.branchService.checkBranchRules(request);
+        if (!branchRules.valid) {
+            availability.elementToFix = branchRules;
+            availability.message = branchRules.reason;
+            availability.proceedBooking = false;
+        }
+        else {
+            const procedureAvailability = this.procedureService.checkProcedureRules(request);
+            if (!procedureAvailability.valid) {
+                availability.elementToFix = procedureAvailability;
+                availability.message = procedureAvailability.reason;
+                availability.proceedBooking = false;
             }
             else {
-                message = "I'm sorry, but I couldn't book your appointment, there was an internal error";
-                return <AppointmentResponse>{
-                    text: `${message}`,
-                    ssml: `<speak>${message}</speak>`
-                };
+                const assessorAvailability = this.assessorService.checkAssessorRules(request);
+                if (!assessorAvailability.valid) {
+                    availability.elementToFix = assessorAvailability ;
+                    availability.message = procedureAvailability.reason;
+                    availability.proceedBooking = false;
+                }
+                else {
+                    const dateAvailability = this.dateService.checkDateRules(request);
+                    if (!dateAvailability.valid) {
+                        availability.elementToFix = dateAvailability;
+                        availability.message = procedureAvailability.reason;
+                        availability.proceedBooking = false;
+                    }
+                    else {
+                        const procedureAvailability = this.timeService.checkTimeRules(request);
+                        if (!procedureAvailability.valid) {
+                            availability.elementToFix = procedureAvailability;
+                            availability.message = procedureAvailability.reason;
+                            availability.proceedBooking = false;
+                        }
+                        else {
+                            // if everything is possible then check for availability
+                           availability = this.checkAppointmentAvailability(request, availability);
+                        }
+                    }
+                }
             }
         }
-        catch (ex) {
-            message = "I'm sorry, but I couldn't book your appointment, there was an internal error";
-            console.error(ex);
-            return <AppointmentResponse>{
-                text: `${message}`,
-                ssml: `<speak>${message}</speak>`
-            };
-        }
+
+        return availability;
+    }
+
+    private checkAppointmentAvailability(request: AppointmentRequest, availability: AvailabilityResponse): AvailabilityResponse  {
+        // TODO: check in db if available if not suggest alternatives
+        // check if date is fully booked (get day and count hours from opening to close until not finding)
+        // check if time is available
+        availability.proceedBooking = true;
+        return availability;
+    }
+
+    private suggestChangeAlternatives(request: AppointmentRequest ) {
+        // TODO: find out a way of suggesting alternatives
     }
 }

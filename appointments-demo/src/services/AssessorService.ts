@@ -1,6 +1,7 @@
 import * as Alexa from "alexa-sdk";
 import {SessionHelper} from "../helpers";
 import { AlexaResponse, Assessor } from "../models";
+import { AppointmentRequest, ElementRules} from "../models/dto";
 import { AssessorRepository } from "../repositories";
 
 export class AssessorService {
@@ -70,9 +71,9 @@ export class AssessorService {
         }
     }
 
-    async assessorElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean): Promise<void> {
+    async assessorElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean, previousMatchInvalidMessage: string = ""): Promise<void> {
         const assessors = await this.assessorRepository.findAll();
-        const invalidSpeech = (invalid) ? `I'm sorry, I couldn't find that assessor.` : ``;
+        const invalidSpeech = (invalid) ? (previousMatchInvalidMessage === "") ? `I'm sorry, I couldn't find that assessor.` : previousMatchInvalidMessage : ``;
         const repromptSpeech = `${invalidSpeech} Currently we have the following assessors available: ${ this.getPopularAssessors(assessors)}. I've sent the complete list of assessors to your Alexa App. Who would you like to book with?`;
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_ASSESSOR",
@@ -108,6 +109,21 @@ export class AssessorService {
         else {
             await this.assessorElicit(intentObj, false, false);
         }
+    }
+
+    public checkAssessorRules(request: AppointmentRequest): ElementRules {
+        const asssessorViability: ElementRules = {
+            name: "SEL_SERVICE",
+            reason: "",
+            valid: true
+        };
+        if (request.selAssessor !== "N/A") {
+            // check SEL_ASSESSOR possible in SEL_BRANCH
+            // check SEL_ASSESSOR possible in SEL_SERVICE
+            // check SEL_ASSESSOR possible in SEL_DATE
+            // check SEL_ASSESSOR possible in SEL_TIME
+        }
+        return asssessorViability;
     }
 
 
