@@ -36,7 +36,7 @@ export class TimeService {
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_TIME",
             repromptSpeech: repromptSpeech,
-            speechOutput: (listAllItems) ? repromptSpeech : `${questionSpeech}`,
+            speechOutput: (listAllItems || indicatePreviousMatchInvalid) ? repromptSpeech : `${questionSpeech}`,
             cardContent: `${times}`,
             cardTitle: "Available Times",
             updatedIntent: intentObj,

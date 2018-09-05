@@ -15,9 +15,9 @@ export class DateService {
 
     // DATE
 
-    handleDateSlotConfirmation(intentObj: Alexa.Intent): void {
+    async handleDateSlotConfirmation(intentObj: Alexa.Intent): Promise<void> {
         if (intentObj.slots.SEL_DATE.confirmationStatus === "DENIED") {
-            this.dateElicit(intentObj, true, false);
+            await this.dateElicit(intentObj, true, false);
         } else {
             // Slot value is not successMatch
             const slotToConfirm = "SEL_DATE";
@@ -27,14 +27,16 @@ export class DateService {
         }
     }
 
-    async dateElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean, previousMatchInvalidMessage: string = ""): Promise<void> {
+    async dateElicit(intentObj: Alexa.Intent, listAllItems: boolean, indicatePreviousMatchInvalid: boolean, previousMatchInvalidMessage: string = ""): Promise<void> {
         const dates = "05/12/2018, 06/12/2018 and 07/12/2018";
-        const invalidSpeech = (invalid) ? (previousMatchInvalidMessage === "") ? `I'm sorry, I couldn't find that date. You must provide an specific date` : previousMatchInvalidMessage : ``;
-        const repromptSpeech = `${invalidSpeech} I have some space on the following dates: ${dates}. I've sent a list of available dates to your Alexa App. What's your date preference for this appointment?,`;
+        const invalidSpeech = (indicatePreviousMatchInvalid) ? (previousMatchInvalidMessage === "") ? `I'm sorry, I couldn't find that date. You must provide an specific date` : previousMatchInvalidMessage : ``;
+        // TODO: add randomize to question
+        const questionSpeech =  "On what date would you like to book?"
+        const repromptSpeech = `${invalidSpeech} I have some space on the following dates: ${dates}. I've sent a list of available dates to your Alexa App. ${questionSpeech}`;
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_DATE",
             repromptSpeech: repromptSpeech,
-            speechOutput: (goFull || invalid) ? repromptSpeech : "On what date would you like to book?",
+            speechOutput: (listAllItems || indicatePreviousMatchInvalid) ? repromptSpeech : `${questionSpeech}`,
             cardContent: `${dates}`,
             cardTitle: "Available Dates",
             updatedIntent: intentObj,

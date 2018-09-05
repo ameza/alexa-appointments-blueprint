@@ -44,7 +44,7 @@ export class BranchService {
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_BRANCH",
             repromptSpeech: repromptSpeech,
-            speechOutput: (listAllItems) ? repromptSpeech : `${questionSpeech}`,
+            speechOutput: (listAllItems || indicatePreviousMatchInvalid) ? repromptSpeech : `${questionSpeech}`,
             cardContent: `${this.getFullBranches(branches)}`,
             cardTitle: "Available Offices / Locations",
             updatedIntent: intentObj,

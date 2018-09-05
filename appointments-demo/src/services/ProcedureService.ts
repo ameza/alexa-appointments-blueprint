@@ -59,9 +59,9 @@ export class ProcedureService {
         }
     }
 
-    handleProcedureSlotConfirmation(intentObj: Alexa.Intent): void {
+    async handleProcedureSlotConfirmation(intentObj: Alexa.Intent): Promise<void> {
         if (intentObj.slots.SEL_SERVICE.confirmationStatus === "DENIED") {
-            this.procedureElicit(intentObj, true, false);
+            await this.procedureElicit(intentObj, true, false);
         } else {
             // Slot value is not successMatch
             const slotToConfirm = "SEL_SERVICE";
@@ -71,15 +71,17 @@ export class ProcedureService {
         }
     }
 
-    async procedureElicit(intentObj: Alexa.Intent, goFull: boolean, invalid: boolean, previousMatchInvalidMessage: string = ""): Promise<void> {
+    async procedureElicit(intentObj: Alexa.Intent, listAllItems: boolean, indicatePreviousMatchInvalid: boolean, previousMatchInvalidMessage: string = ""): Promise<void> {
         const services = await this.procedureRepository.findAll();
-        const invalidSpeech = (invalid) ? (previousMatchInvalidMessage === "") ? `Unfortunately that's not a service I can identify.` : previousMatchInvalidMessage : ``;
-        const repromptSpeech = `${invalidSpeech} Our most popular services are: ${this.getPopularProcedures(services)}. I've sent the complete list of services to your Alexa App. What service would you like to book?`;
+        const invalidSpeech = (indicatePreviousMatchInvalid) ? (previousMatchInvalidMessage === "") ? `Unfortunately that's not a service I can identify.` : previousMatchInvalidMessage : ``;
+        // TODO: add randomize to question
+        const questionSpeech = `What service would you like to book?`
+        const repromptSpeech = `${invalidSpeech} Our most popular services are: ${this.getPopularProcedures(services)}. I've sent the complete list of services to your Alexa App. ${questionSpeech}`;
         console.info(repromptSpeech);
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_SERVICE",
             repromptSpeech: repromptSpeech,
-            speechOutput: (goFull || invalid) ? repromptSpeech : "What service would you like to book?",
+            speechOutput: (listAllItems || indicatePreviousMatchInvalid) ? repromptSpeech : `${questionSpeech}`,
             cardContent: `${this.getFullProcedures(services)}`,
             cardTitle: "Available Services",
             updatedIntent: intentObj,
