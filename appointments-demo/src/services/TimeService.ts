@@ -14,6 +14,21 @@ export class TimeService {
         this.timeRepository = new TimeRepository();
     }
 
+    roundTimeToNearestHalfHour(selTime: string) {
+        const start = moment(selTime, "hh:mm");
+
+        const remainder = 30 - (start.minute() % 30);
+        console.info(`time remainder: ${remainder}`);
+        if (remainder === 30) {
+            return selTime;
+        }
+        else {
+            return moment(start).add(remainder, "minutes").format("HH:mm");
+        }
+
+
+    }
+
     // TIME
 
     async handleTimeSlotConfirmation(intentObj: Alexa.Intent): Promise<void> {
@@ -22,7 +37,10 @@ export class TimeService {
         } else {
             // Slot value is not successMatch
             const slotToConfirm = "SEL_TIME";
-            const speechOutput = `You want to book at ${UtilityHelpers.formatTime(intentObj.slots.SEL_TIME.value)}, is that correct?`;
+
+            // Round time before confirmation
+            intentObj.slots.SEL_TIME.value = this.roundTimeToNearestHalfHour(UtilityHelpers.formatTime(intentObj.slots.SEL_TIME.value));
+            const speechOutput = `You want to book at ${intentObj.slots.SEL_TIME.value}, is that correct?`;
             const repromptSpeech = speechOutput;
             this.handler.emit(":confirmSlot", slotToConfirm, speechOutput, repromptSpeech, intentObj);
         }
@@ -31,7 +49,7 @@ export class TimeService {
     async timeElicit(intentObj: Alexa.Intent, listAllItems: boolean, indicatePreviousMatchInvalid: boolean, previousMatchInvalidMessage: string = ""): Promise<void> {
         const times = "14:00, 14:30 and 15:00";
         const invalidSpeech = (indicatePreviousMatchInvalid) ? (previousMatchInvalidMessage === "") ? `That doesn't look like a valid time` : previousMatchInvalidMessage : ``;
-        const questionSpeech = `What is your time preference for this appointment?`;
+        const questionSpeech = `What is your time preference for this appointment? Your selection will be rounded to the closest half hour`;
         const allItemsSpeech = `Some available slots on this date are: ${times}. I've sent a list of available times for this day to your Alexa App.`;
         const repromptSpeech = `${invalidSpeech} ${(listAllItems) ? allItemsSpeech : "" }  ${questionSpeech}`;
         const elicit: AlexaResponse = <AlexaResponse>{
@@ -122,7 +140,7 @@ export class TimeService {
             beforeTime = moment("08:00", format),
             afterTime = moment("18:00", format);
 
-        if (!time.isBetween(beforeTime, afterTime)) {
+        if (!time.isBetween(beforeTime, afterTime, undefined, "[)")) {
             check.message = `${request.selBranch} is not open at ${request.selTime}. Attention hours go from 08:00 to 18:00.`;
             check.valid = false;
         }
@@ -150,11 +168,13 @@ export class TimeService {
     private checkTimePossibleInAssessor(request: AppointmentRequest): RuleCheckResult {
         const check: RuleCheckResult = { valid: true, message: ""};
 
+        // lopez rule only works from 13 to 18
+        const format = "hh:mm";
+        let time = moment(request.selTime, format),
+            beforeTime = moment("13:00", format),
+            afterTime = moment("18:00", format);
         // TODO: get real assessor hours
-        if (true) {
-
-        }
-        else {
+        if (request.selAssessor.toLowerCase().indexOf("lopez") > -1 && !time.isBetween(beforeTime, afterTime, undefined, "[)")) {
             check.message = `${request.selAssessor} is not available at ${request.selTime}. ${request.selAssessor} working hours go from 13:00 to 18:00.`;
             check.valid = false;
         }

@@ -8,7 +8,7 @@ export class BuiltInController extends IntentController {
     }
 
     helpIntent(): void {
-        const speech = "Dental Office allows you to bookIntent appointments in our dental offices, start by saying bookIntent an appointment, if you are not sure about your available options just wait or check your alexa app";
+        const speech = "Dental Office allows you to bookIntent appointments in our dental offices, start by saying bookIntent an appointment";
         this.handler.emit(":ask", speech, speech);
     }
 
@@ -26,18 +26,17 @@ export class BuiltInController extends IntentController {
     }
 
     fallBackIntent(): void {
-        const speech = "Dental Office allows you to bookIntent appointments in our dental offices, start by saying proceedBooking an appointment, if you are not sure about your available options just wait or check your alexa app";
+        const speech = "I couldn't match that with any valid input, start by saying book an appointment";
         this.handler.emit(":ask", speech, speech);
     }
 
     launchIntent(): void {
-        this.handler.state = "BOOKING_MODE";
-        const speech = "Welcome to Dental Office, this skill allows you to proceedBooking appointments in our dental offices, start by saying proceedBooking an appointment";
+        const speech = "Welcome to Dental Office, this skill allows you to book appointments in our dental offices, start by saying book an appointment";
         this.handler.emit(":ask", speech, speech);
     }
 
     notdefinedIntent(): void {
-        const speech = "bad request";
+        const speech = "I'm sorry I couldn't identify the provided input, start by saying book an appointment";
         this.handler.emit(":ask", speech, speech);
     }
 }

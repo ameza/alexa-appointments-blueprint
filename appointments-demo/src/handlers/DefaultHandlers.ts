@@ -36,10 +36,8 @@ export const DefaultHandlers = Alexa.CreateStateHandler("", {
     "AMAZON.FallbackIntent"() {
         new BuiltInController(this).fallBackIntent();
     },
-    Unhandled() {
-
-        console.info("empty unhandled");
-        this.emit("AMAZON.HelpIntent");
+    "Unhandled"() {
+        new BuiltInController(this).helpIntent();
     }
 
 });

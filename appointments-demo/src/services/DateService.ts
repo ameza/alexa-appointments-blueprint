@@ -1,7 +1,7 @@
 import * as Alexa from "alexa-sdk";
 import * as moment  from "moment";
 import { AlexaResponse } from "../models";
-import { AppointmentRequest, ElementRules} from "../models/dto";
+import {AppointmentRequest, ElementRules, RuleCheckResult} from "../models/dto";
 import { DateRepository } from "../repositories";
 
 export class DateService {
@@ -71,7 +71,7 @@ export class DateService {
     }
 
     public checkDateRules(request: AppointmentRequest): ElementRules {
-        const dateViability: ElementRules = {
+        const dateRules: ElementRules = {
             name: "SEL_DATE",
             reason: "",
             valid: true
@@ -81,7 +81,97 @@ export class DateService {
             // check SEL_DATE possible in SEL_SERVICE
             // check SEL_DATE possible in SEL_ASSESSOR
             // check SEL_DATE possible in SEL_TIME
+            const datePossibleInBranch =  this.checkDatePossibleInBranch(request);
+            if (!datePossibleInBranch.valid) {
+                dateRules.reason = datePossibleInBranch.message;
+                dateRules.valid = false;
+            } else {
+                const datePossibleInService = this.checkDatePossibleInService(request);
+                if (!datePossibleInService.valid) {
+                    dateRules.reason = datePossibleInService.message;
+                    dateRules.valid = false;
+                } else {
+                    const datePossibleInAssessor = this.checkDatePossibleInAssessor(request);
+                    if (!datePossibleInAssessor.valid) {
+                        dateRules.reason = datePossibleInAssessor.message;
+                        dateRules.valid = false;
+                    } else {
+                        const datePossibleInTime = this.checkDatePossibleInTime(request);
+                        if (!datePossibleInTime.valid) {
+                            dateRules.reason =  datePossibleInTime.message;
+                            dateRules.valid = false;
+                        }
+                    }
+                }
+            }
         }
-        return dateViability;
+        return dateRules;
+    }
+
+    // custom rules can be added in the following methods, based on db calls
+
+    private checkDatePossibleInBranch(request: AppointmentRequest): RuleCheckResult {
+
+        const check: RuleCheckResult = { valid: true, message: ""};
+        // TODO: get real business dates
+
+        // monday to friday rule for all branches
+        const format = "YYYY-MM-DD";
+        let date = moment(request.selDate, format);
+        if (date.isoWeekday() === 6 || date.isoWeekday() === 7) {
+            check.message = `${request.selBranch} is not open on weekends. ${request.selBranch} is Open from Monday to Friday.`;
+            check.valid = false;
+        }
+
+        return check;
+
+    }
+
+    private checkDatePossibleInService(request: AppointmentRequest): RuleCheckResult {
+        const check: RuleCheckResult = { valid: true, message: ""};
+
+        // TODO: get real service dates
+        if (true) {
+
+        }
+        else {
+            check.message = `${request.selService} is not provided on ${request.selDate}. Service is provided at noon only.`;
+            check.valid = false;
+        }
+
+        return check;
+
+    }
+
+    private checkDatePossibleInAssessor(request: AppointmentRequest): RuleCheckResult {
+        const check: RuleCheckResult = { valid: true, message: ""};
+
+        // meza rule only works on Mondays
+        const format = "YYYY-MM-DD";
+        let date = moment(request.selDate, format);
+        // TODO: get real assessor dates
+        const assessor = request.selAssessor;
+        console.info(`assessor: ${assessor.toLowerCase()} index ${assessor.toLowerCase().indexOf("meza")} date: ${date.isoWeekday()}`)
+        if (assessor.toLowerCase().indexOf("meza") > -1 && date.isoWeekday() === 1) {
+            check.message = `${request.selAssessor} is not available on Mondays. ${request.selAssessor} is available from Tuesday to Wednesday.`;
+            check.valid = false;
+        }
+
+        return check;
+    }
+
+    private checkDatePossibleInTime(request: AppointmentRequest): RuleCheckResult {
+        const check: RuleCheckResult = { valid: true, message: ""};
+
+        // TODO: get real date hours
+        if (true) {
+
+        }
+        else {
+            check.message = `${request.selTime} is not available on ${request.selDate}. Attention hours for ${request.selDate} go from 08:00 to 12:00.`;
+            check.valid = false;
+        }
+
+        return check;
     }
 }
