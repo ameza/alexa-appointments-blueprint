@@ -1,16 +1,19 @@
 import * as Alexa from "alexa-sdk";
 import * as moment  from "moment";
-import { UtilityHelpers } from "../helpers";
-import { AlexaResponse } from "../models";
+import { SessionHelper, UtilityHelpers} from "../helpers";
+import {AlexaResponse, NextAvailable, Service} from "../models";
 import { AppointmentRequest, ElementRules, RuleCheckResult } from "../models/dto";
-import { TimeRepository } from "../repositories";
+import { AppointmentRepository, TimeRepository} from "../repositories";
+
 
 export class TimeService {
-    timeRepository: TimeRepository;
+      timeRepository: TimeRepository;
+    appointmentRepository: AppointmentRepository;
     handler: Alexa.Handler<Alexa.Request>;
 
     constructor(handler: Alexa.Handler<Alexa.Request>) {
         this.handler = handler;
+        this.appointmentRepository = new AppointmentRepository();
         this.timeRepository = new TimeRepository();
     }
 
@@ -47,7 +50,36 @@ export class TimeService {
     }
 
     async timeElicit(intentObj: Alexa.Intent, listAllItems: boolean, indicatePreviousMatchInvalid: boolean, previousMatchInvalidMessage: string = ""): Promise<void> {
-        const times = "14:00, 14:30 and 15:00";
+
+        const currentDate =  intentObj.slots.SEL_DATE.value;
+        const currentAssessor = SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue;
+        const currentBranch = SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_BRANCH").realValue;
+
+        console.info(`about to retrieve available date for date: ${currentDate} and assessor: ${currentAssessor}`);
+
+        const availableHours = await this.getAvailableHours(currentDate, currentAssessor, currentBranch);
+
+        let times = "";
+        let fulltimes = "";
+
+        if (availableHours.length === 0) {
+            console.info("unable to list items do date fully booked");
+            listAllItems = false;
+        }
+        else {
+           fulltimes = await this.getAvailableHourListed(availableHours);
+           for (let c = 0; c < 3; c++) {
+               if (availableHours[c]) {
+                   if (c === 1) {
+                       times = `${times}${availableHours[c]} and `;
+                   } else {
+                       times = `${times}${availableHours[c]}, `;
+                   }
+               }
+           }
+        }
+
+
         const invalidSpeech = (indicatePreviousMatchInvalid) ? (previousMatchInvalidMessage === "") ? `That doesn't look like a valid time` : previousMatchInvalidMessage : ``;
         const questionSpeech = `What is your time preference for this appointment? Your selection will be rounded to the closest half hour`;
         const allItemsSpeech = `Some available slots on this date are: ${times}. I've sent a list of available times for this day to your Alexa App.`;
@@ -56,7 +88,7 @@ export class TimeService {
             slotToElicit: "SEL_TIME",
             repromptSpeech: repromptSpeech,
             speechOutput: (listAllItems || indicatePreviousMatchInvalid) ? repromptSpeech : `${questionSpeech}`,
-            cardContent: `${times}`,
+            cardContent: `${fulltimes}`,
             cardTitle: "Available Times",
             updatedIntent: intentObj,
             /*  imageObj: {
@@ -135,13 +167,24 @@ export class TimeService {
         // TODO: get real business hours
 
         const format = "hh:mm";
+        let time = moment(request.selTime, format);
 
-        let time = moment(request.selTime, format),
-            beforeTime = moment("08:00", format),
-            afterTime = moment("18:00", format);
+
+        // opening hours rule
+        let beforeTime = moment("08:00", format);
+        let afterTime = moment("18:00", format);
 
         if (!time.isBetween(beforeTime, afterTime, undefined, "[)")) {
             check.message = `${request.selBranch} is not open at ${request.selTime}. Attention hours go from 08:00 to 18:00.`;
+            check.valid = false;
+        }
+
+        // previous time rule
+        beforeTime = moment(new Date(), format).utcOffset("-06:00");
+        afterTime = moment("18:00", format);
+
+        if (!time.isBetween(beforeTime, afterTime, undefined, "[)")) {
+            check.message = `booking at a previous time is not allowed, server time ${beforeTime.format(format)}`;
             check.valid = false;
         }
 
@@ -153,10 +196,7 @@ export class TimeService {
         const check: RuleCheckResult = { valid: true, message: ""};
 
         // TODO: get real service hours
-        if (true) {
-
-        }
-        else {
+        if (!true) {
             check.message = `${request.selService} is not provided at ${request.selTime}. Service is provided at noon only.`;
             check.valid = false;
         }
@@ -186,14 +226,57 @@ export class TimeService {
         const check: RuleCheckResult = { valid: true, message: ""};
 
         // TODO: get real date hours
-        if (true) {
-
-        }
-        else {
+        if (!true) {
             check.message = `${request.selTime} is not available on ${request.selDate}. Attention hours for ${request.selDate} go from 08:00 to 12:00.`;
             check.valid = false;
         }
 
         return check;
+    }
+
+    // final availability check
+
+    public async getAvailableHours(selDate: string, selAssessor: string, selBranch: string): Promise<string[]> {
+        const possibleHours = this.generateArrayOfPossibleHours();
+        const dateAppointments = await this.appointmentRepository.findAppointmentsByDate(selDate, selAssessor, selBranch);
+        const filteredHours = possibleHours.filter((el) => dateAppointments.map((item) => item.startTime).indexOf(el) < 0);
+
+        console.info(`available hours found`);
+        console.info(filteredHours);
+        return filteredHours;
+    }
+
+    public async getAvailableHourListed(availableHours: string[]): Promise<string> {
+        return ` ${availableHours.map( x => { return x; }).join("\r\n")}`;
+    }
+
+    private generateArrayOfPossibleHours(): string[] {
+        // TODO: replace here for real start and closing hours by branch
+        const hoursArray: string[] = [];
+        for (let hour = 8; hour < 18; hour++) {
+            if (hour < 10) {
+                hoursArray.push(`0${hour}:00`);
+                hoursArray.push(`0${hour}:30`);
+            } else {
+                hoursArray.push(`${hour}:00`);
+                hoursArray.push(`${hour}:30`);
+            }
+        }
+        return hoursArray;
+    }
+
+    public async nextAvailableAppointment(selDate: string, selAssessor: string, selBranch: string): Promise<NextAvailable> {
+        if (selDate === "") {
+            selDate = moment().format("YYYY-MM-DD");
+        }
+        let availableHours: string[] = [];
+        do {
+            availableHours = await this.getAvailableHours(selDate, selAssessor, selBranch);
+            selDate = moment(selDate, "YYYY-MM-DD").add(1, "days").format("YYYY-MM-DD");
+        } while (availableHours.length === 0);
+        return {
+            nextAvailableTime: availableHours[0],
+            nextAvailableDate: selDate
+        };
     }
 }

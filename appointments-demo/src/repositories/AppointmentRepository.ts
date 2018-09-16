@@ -22,7 +22,7 @@ export class AppointmentRepository {
                 date: appointmentRequest.selDate,
                 email: "",
                 endTime: appointmentRequest.selTime,
-                starTime: appointmentRequest.selTime, // TODO: add 30 minutes here
+                startTime: appointmentRequest.selTime, // TODO: add 30 minutes here
                 service: appointmentRequest.selService,
             }, {
                 returning: true,
@@ -31,8 +31,17 @@ export class AppointmentRepository {
         });
     }
 
-    public async findAppointmentsByDate(date: string, assessor: string): Promise<Array<Appointment>> {
-        return await Appointment.findAll<Appointment>({where: { date : date, assessor: assessor }, raw: false});
+    public async findAppointmentsByDate(date: string, assessor: string, branch: string): Promise<Array<Appointment>> {
+        if (assessor && assessor !== "" && assessor !== "N/A") {
+            if (branch && branch !== "" && branch !== "N/A")
+                return await Appointment.findAll<Appointment>({where: {date: date, assessor: assessor, branch: branch}, raw: true});
+            else {
+                return await Appointment.findAll<Appointment>({where: {date: date, assessor: assessor}, raw: true});
+            }
+        }
+        else {
+            return await Appointment.findAll<Appointment>({where: { date : date }, raw: true});
+        }
     }
 }
 

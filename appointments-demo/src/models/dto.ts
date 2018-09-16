@@ -40,6 +40,11 @@ export interface RuleCheckResult {
     valid: boolean;
     message: string;
 }
+
+export interface NextAvailable {
+    nextAvailableTime: string;
+    nextAvailableDate: string;
+}
 // elicit
 
 export interface AlexaResponse  {
@@ -64,3 +69,5 @@ export class MatchedSlot implements SlotValue {
     resolutions: Resolutions;
     value: any;
 }
+
+

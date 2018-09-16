@@ -1,6 +1,6 @@
 import * as Alexa from "alexa-sdk";
 import { SessionHelper, UtilityHelpers } from "../helpers";
-import { AlexaResponse, AppointmentRequest, Assessor, Branch, Configuration } from "../models";
+import { AlexaResponse, AppointmentRequest, Assessor, Branch, Configuration, NextAvailable } from "../models";
 import { AppointmentService, AssessorService, BranchService, ConfigurationService, DateService, ProcedureService, TimeService } from "../services";
 import { IntentController } from "./base/IntentController";
 
@@ -29,7 +29,8 @@ export class AppointmentsController extends IntentController {
     // INTENT
 
     async handleBookIntentConfirmed(intentObj: Alexa.Intent): Promise<void> {
-        console.log("in completed");
+
+
 
         const appointmentRequest: AppointmentRequest = {
             selBranch: SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_BRANCH").realValue,
@@ -292,7 +293,7 @@ export class AppointmentsController extends IntentController {
     }
 
     // reads the model config from the db and populate defaults
-    async assignConfigurationDefaults(intentObj: Alexa.Intent): Promise<void> {
+    async assignConfigurationDefaults(intentObj: Alexa.Intent, selBranch: string): Promise<void> {
         const config = await this.getModelConfiguration();
 
         if (intentObj.slots.SEL_ASSESSOR.confirmationStatus !== "CONFIRMED") {
@@ -315,11 +316,16 @@ export class AppointmentsController extends IntentController {
             }
         }
 
+        // fetch next available date and time based on branch
+
+        const nextAppointment: NextAvailable = await this.timeService.nextAvailableAppointment("", "", selBranch);
+
+
         if (intentObj.slots.SEL_DATE.confirmationStatus !== "CONFIRMED") {
             switch (config.dateConfig) {
                 case "G":
 
-                    const randDate = await this.dateService.dateRepository.findRandom();
+                    const randDate = nextAppointment.nextAvailableDate;
 
                     intentObj.slots.SEL_DATE.value = randDate;
                     intentObj.slots.SEL_DATE.confirmationStatus = "CONFIRMED";
@@ -337,7 +343,7 @@ export class AppointmentsController extends IntentController {
             switch (config.timeConfig) {
                 case "G":
 
-                    const randTime = await this.timeService.timeRepository.findRandom();
+                    const randTime = nextAppointment.nextAvailableTime;
 
                     intentObj.slots.SEL_TIME.value = randTime;
                     intentObj.slots.SEL_TIME.confirmationStatus = "CONFIRMED";
@@ -409,6 +415,8 @@ export class AppointmentsController extends IntentController {
 
     async bookIntent(): Promise<void> {
 
+        console.log("in completed");
+
         const request: Alexa.IntentRequest = this.handler.event.request; // = fakeDialogState(this.handler.event.request);
         const intentObj = request.intent;
 
@@ -430,7 +438,12 @@ export class AppointmentsController extends IntentController {
         console.info(`request after fix config`);
         console.info(request.intent.slots);
 
-        await this.assignConfigurationDefaults(intentObj);
+        // we don't set the defaults until having a branch, we need it to obtain proper recommendations on date and time
+        const selBranch = SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_BRANCH").realValue;
+
+        if (selBranch) {
+            await this.assignConfigurationDefaults(intentObj, selBranch);
+        }
 
         console.info(`request assign config defaults`);
         console.info(request.intent.slots);

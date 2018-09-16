@@ -1,5 +1,8 @@
 import * as Alexa from "alexa-sdk";
 import { IntentController } from "./base/IntentController";
+import {AppointmentService} from "../services";
+import {attachedPoliciesListType} from "aws-sdk/clients/iam";
+import {AvailabilityResponse} from "../models/dto";
 
 export class BuiltInController extends IntentController {
 
@@ -31,6 +34,7 @@ export class BuiltInController extends IntentController {
     }
 
     launchIntent(): void {
+
         const speech = "Welcome to Dental Office, this skill allows you to book appointments in our dental offices, start by saying book an appointment";
         this.handler.emit(":ask", speech, speech);
     }

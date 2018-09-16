@@ -36,10 +36,6 @@ export class AppointmentService {
        return  await this.appointmentRepository.create(request);
     }
 
-    private async findAppointmentsByDate(date: string, assessor: string): Promise<Array<Appointment>> {
-        return await  this.appointmentRepository.findAppointmentsByDate(date, assessor);
-    }
-
     public async checkAppointmentRules(request: AppointmentRequest): Promise<AvailabilityResponse> {
         let availability: AvailabilityResponse = { elementToFix: undefined, message: "", proceedBooking: true };
 
@@ -79,8 +75,11 @@ export class AppointmentService {
                             availability.proceedBooking = false;
                         }
                         else {
+                            console.info(`about to check final availability`);
                             // if everything is possible then check for availability
                            availability = await this.checkAppointmentAvailability(request, availability);
+                           console.info(`availability final result`);
+                           console.info(availability);
                         }
                     }
                 }
@@ -90,11 +89,11 @@ export class AppointmentService {
         return availability;
     }
 
-    private async checkAppointmentAvailability(request: AppointmentRequest, availability: AvailabilityResponse): Promise<AvailabilityResponse>  {
+    public async checkAppointmentAvailability(request: AppointmentRequest, availability: AvailabilityResponse): Promise<AvailabilityResponse>  {
         // TODO: check in db if available if not suggest alternatives
         availability.proceedBooking = true;
-       const availableHours = await this.getAvailableHours(request);
-
+       const availableHours = await this.timeService.getAvailableHours(request.selDate, request.selAssessor, request.selBranch);
+        console.info(`about to check rules for time: ${request.selTime} assessor: ${request.selAssessor}`);
         // check if date is fully booked (get day and count hours from opening to close until not finding)
         if (availableHours.length === 0) {
             availability.proceedBooking = false;
@@ -103,44 +102,21 @@ export class AppointmentService {
                 reason: "",
                 valid: true
             };
-            availability.message = `Unfortunately this date is fully booked with ${request.selAssessor}`;
-        } else if (availableHours.indexOf(request.selTime) < -1) {
+            availability.message = `Unfortunately this date is fully booked with ${request.selAssessor}, try another date or Doctor`;
+        } else if (availableHours.indexOf(request.selTime) <= -1) {
+            console.info(`time ${request.selTime} found in available hours`);
             availability.proceedBooking = false;
             availability.elementToFix =  {
                 name: "SEL_TIME",
                 reason: "",
                 valid: true
             };
-            availability.message = `Unfortunately this time is already booked with ${request.selAssessor}`;
+            availability.message = `Unfortunately this time is already booked with ${request.selAssessor}, try another time.`;
         }
         // check if time is available
 
         return availability;
     }
 
-    private suggestChangeAlternatives(request: AppointmentRequest ) {
-        // TODO: find out a way of suggesting alternatives
-    }
 
-    public async getAvailableHours(request: AppointmentRequest): Promise<string[]> {
-        const possibleHours = this.generateArrayOfPossibleHours();
-        const dateAppointments = await this.findAppointmentsByDate(request.selDate, request.selAssessor);
-        const filteredHours = possibleHours.filter((possible) => dateAppointments.every((booked) => possible !== booked.date));
-        return filteredHours;
-    }
-
-    private generateArrayOfPossibleHours(): string[] {
-        // TODO: replace here for real start and closing hours by branch
-        const hoursArray: string[] = [];
-        for (let hour = 8; hour < 18; hour++) {
-            if (hour < 10) {
-                hoursArray.push(`0${hour}:00`);
-                hoursArray.push(`0${hour}:30`);
-            } else {
-                hoursArray.push(`${hour}:00`);
-                hoursArray.push(`${hour}:30`);
-            }
-        }
-        return hoursArray;
-    }
 }
