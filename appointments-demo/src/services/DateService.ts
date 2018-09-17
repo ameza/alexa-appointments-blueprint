@@ -33,11 +33,10 @@ export class DateService {
 
     async dateElicit(intentObj: Alexa.Intent, listAllItems: boolean, indicatePreviousMatchInvalid: boolean, previousMatchInvalidMessage: string = ""): Promise<void> {
 
-        const currentDate = SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_DATE").realValue;
         const currentAssessor = SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue;
         const currentBranch = SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_BRANCH").realValue;
 
-        const nextAvailableAppointment = await this.timeService.nextAvailableAppointment(currentDate, currentAssessor, currentBranch);
+        const nextAvailableAppointment = await this.timeService.nextAvailableAppointment(undefined, currentAssessor, currentBranch);
 
         const invalidSpeech = (indicatePreviousMatchInvalid) ? (previousMatchInvalidMessage === "") ? `I'm sorry, I couldn't find that date. You must provide an specific date` : previousMatchInvalidMessage : ``;
         // TODO: add randomize to question
@@ -68,7 +67,7 @@ export class DateService {
 
             if (moment(intentObj.slots.SEL_DATE.value, "YYYY-MM-DD", true).isValid() === true) {
                 console.info("confirm");
-                this.handleDateSlotConfirmation(intentObj);
+                await this.handleDateSlotConfirmation(intentObj);
             }
             else {
                 console.info("entro");
@@ -131,10 +130,10 @@ export class DateService {
 
         // future date rule
 
-        let beforeTime = moment(new Date()).utcOffset("-06:00");
-
-        if (date.isBefore(beforeTime)) {
-            check.message = `booking at a previous date is not allowed, my current date is: ${beforeTime.format(format)},`;
+        let now = moment(new Date());
+        console.info(`about to compare dates before ${now} and selected ${date}`);
+        if (date.isBefore(now, "day")) {
+            check.message = `booking at a previous date is not allowed, my current date is: ${now.format(`${format} hh:mm`)},`;
             check.valid = false;
         }
 

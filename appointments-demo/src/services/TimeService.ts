@@ -266,14 +266,15 @@ export class TimeService {
     }
 
     public async nextAvailableAppointment(selDate: string, selAssessor: string, selBranch: string): Promise<NextAvailable> {
-        if (selDate === "") {
+        console.info(`trying to determine next available app ${selDate}, ${selAssessor}, ${selBranch}`);
+        if (selDate === "" || selDate === undefined) {
             selDate = moment().format("YYYY-MM-DD");
         }
-        let availableHours: string[] = [];
-        do {
+        let availableHours = await this.getAvailableHours(selDate, selAssessor, selBranch);
+        while (availableHours.length === 0) {
+            selDate = moment(selDate, "YYYY-MM-DD").add(1, "day").format("YYYY-MM-DD");
             availableHours = await this.getAvailableHours(selDate, selAssessor, selBranch);
-            selDate = moment(selDate, "YYYY-MM-DD").add(1, "days").format("YYYY-MM-DD");
-        } while (availableHours.length === 0);
+        }
         return {
             nextAvailableTime: availableHours[0],
             nextAvailableDate: selDate

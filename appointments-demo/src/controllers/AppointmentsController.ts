@@ -31,7 +31,6 @@ export class AppointmentsController extends IntentController {
     async handleBookIntentConfirmed(intentObj: Alexa.Intent): Promise<void> {
 
 
-
         const appointmentRequest: AppointmentRequest = {
             selBranch: SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_BRANCH").realValue,
             selAssessor: SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue,
@@ -60,12 +59,12 @@ export class AppointmentsController extends IntentController {
 
                     const message = `I just booked a ${appointmentRequest.selService} appointment ${assessorText} ${dateText} ${timeText} on the ${appointmentRequest.selBranch} office. A confirmation notification has been sent to your email. Thank you for using dental office`;
 
-                    this.handler.emit(":tellWithCard", message, message, "Booked!!");
+                    this.handler.emit(":tellWithCard", message, "Booked!!", message);
                 }
                 else {
                     message = "I'm sorry, but I couldn't book your appointment, there was an internal error";
 
-                    this.handler.emit(":tellWithCard", message, message, "Booked!!");
+                    this.handler.emit(":tellWithCard", message, message, "An error has occurred");
                 }
             }
             else {
