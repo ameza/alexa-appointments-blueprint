@@ -82,12 +82,14 @@ export class TimeService {
 
         const invalidSpeech = (indicatePreviousMatchInvalid) ? (previousMatchInvalidMessage === "") ? `That doesn't look like a valid time` : previousMatchInvalidMessage : ``;
         const questionSpeech = `What is your time preference for this appointment? Your selection will be rounded to the closest half hour`;
-        const allItemsSpeech = `Some available slots on this date are: ${times}. I've sent a list of available times for this day to your Alexa App.`;
-        const repromptSpeech = `${invalidSpeech} ${(listAllItems) ? allItemsSpeech : "" }  ${questionSpeech}`;
+        const listAllSpeech = `Some available slots on this date are: ${times}. I've sent a list of available times for this day to your Alexa App.`;
+        const repromptSpeech = `${invalidSpeech} ${listAllSpeech}  ${questionSpeech}`;
+        const fullSpeech = `${invalidSpeech} ${(listAllItems) ? listAllSpeech : "" }  ${questionSpeech}`;
+
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_TIME",
             repromptSpeech: repromptSpeech,
-            speechOutput: (listAllItems || indicatePreviousMatchInvalid) ? repromptSpeech : `${questionSpeech}`,
+            speechOutput: (listAllItems || indicatePreviousMatchInvalid) ? fullSpeech : `${questionSpeech}`,
             cardContent: `${fulltimes}`,
             cardTitle: "Available Times",
             updatedIntent: intentObj,
@@ -174,20 +176,19 @@ export class TimeService {
         let beforeTime = moment("08:00", format);
         let afterTime = moment("18:00", format);
 
-        if (!time.isBetween(beforeTime, afterTime, undefined, "[)")) {
+        if (!time.isBetween(beforeTime, afterTime, "hour", "[)")) {
             check.message = `${request.selBranch} is not open at ${request.selTime}. Attention hours go from 08:00 to 18:00.`;
             check.valid = false;
         }
+        else {
 
-        // previous time rule
-        beforeTime = moment(new Date(), format).utcOffset("-06:00");
-        afterTime = moment("18:00", format);
-
-        if (!time.isBetween(beforeTime, afterTime, undefined, "[)")) {
-            check.message = `booking at a previous time is not allowed, server time ${beforeTime.format(format)}`;
-            check.valid = false;
+            // previous time rule
+            let currentTime = moment(new Date());
+            if (time.isBefore()) {
+                check.message = `booking at a previous time is not allowed, the current server time is: ${currentTime.format(format)}.`;
+                check.valid = false;
+            }
         }
-
         return check;
 
     }

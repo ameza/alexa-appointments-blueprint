@@ -103,7 +103,7 @@ export class AppointmentService {
                 valid: true
             };
             availability.message = `Unfortunately this date is fully booked with ${request.selAssessor}, try another date or Doctor`;
-        } else if (availableHours.indexOf(request.selTime) <= -1) {
+        } else if (availableHours.indexOf(request.selTime) <= -1 && request.selTime !== "N/A") {
             console.info(`time ${request.selTime} found in available hours`);
             availability.proceedBooking = false;
             availability.elementToFix =  {

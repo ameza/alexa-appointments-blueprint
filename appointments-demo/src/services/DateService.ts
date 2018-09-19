@@ -42,11 +42,13 @@ export class DateService {
         // TODO: add randomize to question
         const questionSpeech =  "On what date would you like to book?";
         const listAllSpeech = `The next date with an available appointment is ${nextAvailableAppointment.nextAvailableDate}.`;
-        const repromptSpeech = `${invalidSpeech} ${(listAllItems) ? listAllSpeech : "" }  ${questionSpeech}`;
+        const repromptSpeech = `${invalidSpeech} ${listAllSpeech}  ${questionSpeech}`;
+        const fullSpeech = `${invalidSpeech} ${(listAllItems) ? listAllSpeech : "" }  ${questionSpeech}`;
+
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_DATE",
             repromptSpeech: repromptSpeech,
-            speechOutput: (listAllItems || indicatePreviousMatchInvalid) ? repromptSpeech : `${questionSpeech}`,
+            speechOutput: (listAllItems || indicatePreviousMatchInvalid) ? fullSpeech : `${questionSpeech}`,
             cardContent: `${listAllSpeech}`,
             cardTitle: "Available Dates",
             updatedIntent: intentObj,
@@ -133,7 +135,7 @@ export class DateService {
         let now = moment(new Date());
         console.info(`about to compare dates before ${now} and selected ${date}`);
         if (date.isBefore(now, "day")) {
-            check.message = `booking at a previous date is not allowed, my current date is: ${now.format(`${format} hh:mm`)},`;
+            check.message = `booking at a previous date is not allowed, my current date is: ${now.format(`${format}`)},`;
             check.valid = false;
         }
 

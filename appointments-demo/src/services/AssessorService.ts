@@ -76,12 +76,14 @@ export class AssessorService {
         const invalidSpeech = (indicatePreviousMatchInvalid) ? (previousMatchInvalidMessage === "") ? `I'm sorry, I couldn't find that assessor.` : previousMatchInvalidMessage : ``;
         // TODO: add randomize to question
         const questionSpeech = `Who would you like to assist you?`;
-        const listAllSpeech = `Currently we have the following assessors available: ${ this.getPopularAssessors(assessors)}. I've sent the complete list of assessors to your Alexa App.`;
-        const repromptSpeech = `${invalidSpeech} ${(listAllItems) ? listAllSpeech : "" }  ${questionSpeech}`;
+        const listAllSpeech = `Currently we have the following doctors available: ${ this.getPopularAssessors(assessors)}. I've sent the complete list of doctors to your Alexa App.`;
+        const repromptSpeech = `${invalidSpeech} ${listAllSpeech}  ${questionSpeech}`;
+        const fullSpeech = `${invalidSpeech} ${(listAllItems) ? listAllSpeech : "" }  ${questionSpeech}`;
+
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_ASSESSOR",
             repromptSpeech: repromptSpeech,
-            speechOutput: (listAllItems || indicatePreviousMatchInvalid) ? repromptSpeech : `${questionSpeech}`,
+            speechOutput: (listAllItems || indicatePreviousMatchInvalid) ? fullSpeech : `${questionSpeech}`,
             cardContent: `${this.getFullAssessors(assessors)}`,
             cardTitle: "Available Assessors",
             updatedIntent: intentObj,

@@ -57,7 +57,7 @@ export class AppointmentsController extends IntentController {
                     const dateText = (appointmentRequest.selDate === "N/A") ? "" : `for ${appointmentRequest.selDate}`;
                     const timeText = (appointmentRequest.selTime === "N/A") ? "" : `at ${appointmentRequest.selTime}`;
 
-                    const message = `I just booked a ${appointmentRequest.selService} appointment ${assessorText} ${dateText} ${timeText} on the ${appointmentRequest.selBranch} office. A confirmation notification has been sent to your email. Thank you for using dental office`;
+                    const message = `I just booked a ${appointmentRequest.selService} appointment ${assessorText} ${dateText} ${timeText} on ${appointmentRequest.selBranch}. A confirmation notification has been sent to your email. Thank you for using dental office`;
 
                     this.handler.emit(":tellWithCard", message, "Booked!!", message);
                 }
@@ -150,8 +150,8 @@ export class AppointmentsController extends IntentController {
                 const dateText = (intentObj.slots.SEL_DATE.value === "N/A") ? "" : `for ${intentObj.slots.SEL_DATE.value}`;
                 const timeText = (intentObj.slots.SEL_TIME.value === "N/A") ? "" : `at ${ UtilityHelpers.formatTime(intentObj.slots.SEL_TIME.value)} `;
 
-                const message = `You want to book an ${serviceText} appointment ${assessorText} ${dateText} ${timeText} on ${branchText}`;
-                const speechOutput = `${message}, is that correct?`;
+                const message = `I got a ${serviceText} appointment ${assessorText} ${dateText} ${timeText} on ${branchText}`;
+                const speechOutput = `${message}, ${UtilityHelpers.shouldIbookItHelper()}`;
                 const cardTitle = "Booking Summary";
                 const repromptSpeech = speechOutput;
                 const cardContent = speechOutput;

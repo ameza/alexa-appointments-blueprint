@@ -77,12 +77,13 @@ export class ProcedureService {
         // TODO: add randomize to question
         const questionSpeech = `What service would you like to book?`;
         const listAllSpeech = `Our most popular services are: ${this.getPopularProcedures(services)}. I've sent the complete list of services to your Alexa App.`;
-        const repromptSpeech = `${invalidSpeech} ${(listAllItems) ? listAllSpeech : "" }  ${questionSpeech}`;
-        console.info(repromptSpeech);
+        const repromptSpeech = `${invalidSpeech} ${listAllSpeech}  ${questionSpeech}`;
+        const fullSpeech = `${invalidSpeech} ${(listAllItems) ? listAllSpeech : "" }  ${questionSpeech}`;
+
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_SERVICE",
             repromptSpeech: repromptSpeech,
-            speechOutput: (listAllItems || indicatePreviousMatchInvalid) ? repromptSpeech : `${questionSpeech}`,
+            speechOutput: (listAllItems || indicatePreviousMatchInvalid) ? fullSpeech : `${questionSpeech}`,
             cardContent: `${this.getFullProcedures(services)}`,
             cardTitle: "Available Services",
             updatedIntent: intentObj,

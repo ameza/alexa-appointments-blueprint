@@ -40,12 +40,13 @@ export class BranchService {
         const invalidSpeech = (indicatePreviousMatchInvalid) ?  (previousMatchInvalidMessage === "") ? `I couldn't match that with any of our locations.` : previousMatchInvalidMessage : ``;
         const questionSpeech =  `Where would you like to book your appointment?`;
         const listAllSpeech = `Our most popular locations are: ${this.getPopularBranches(branches)}. I've sent the complete list of locations to the Alexa App.`;
-        const repromptSpeech = `${invalidSpeech} ${(listAllItems) ? listAllSpeech : "" }  ${questionSpeech}`;
+        const repromptSpeech = `${invalidSpeech} ${ listAllSpeech }  ${questionSpeech}`;
+        const fullSpeech = `${invalidSpeech} ${(listAllItems) ? listAllSpeech : "" }  ${questionSpeech}`;
 
         const elicit: AlexaResponse = <AlexaResponse>{
             slotToElicit: "SEL_BRANCH",
             repromptSpeech: repromptSpeech,
-            speechOutput: (listAllItems || indicatePreviousMatchInvalid) ? repromptSpeech : `${questionSpeech}`,
+            speechOutput: (listAllItems || indicatePreviousMatchInvalid) ? fullSpeech : `${questionSpeech}`,
             cardContent: `${this.getFullBranches(branches)}`,
             cardTitle: "Available Offices / Locations",
             updatedIntent: intentObj,
@@ -87,10 +88,10 @@ export class BranchService {
         }
     }
 
-    handleBranchSlotConfirmation(intentObj: Alexa.Intent): void {
+    async handleBranchSlotConfirmation(intentObj: Alexa.Intent): Promise<void> {
 
         if (intentObj.slots.SEL_BRANCH.confirmationStatus === "DENIED") {
-            this.branchElicit(intentObj, true, false);
+            await this.branchElicit(intentObj, true, false);
         }
         else {
             // Slot value is not confirmed

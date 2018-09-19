@@ -7,4 +7,10 @@ export class UtilityHelpers {
         }
         return currentTime;
     }
+
+    static shouldIbookItHelper(): string {
+        const items = ["do you want to book it ?", "should I proceed booking?"]
+        return items[Math.floor(Math.random() * items.length)];
+
+    }
 }
