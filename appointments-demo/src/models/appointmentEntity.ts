@@ -61,7 +61,7 @@ export class Appointment extends Model<Appointment> {
         allowNull: false,
         field: "startTime",
     })
-    public starTime: string;
+    public startTime: string;
 
     @Column({
         type: DataType.CHAR(50),

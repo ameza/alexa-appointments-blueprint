@@ -30,7 +30,11 @@ export class SessionHelper {
                         result.resolutions.resolutionsPerAuthority[0].values[0] &&
                         result.resolutions.resolutionsPerAuthority[0].values[0].value &&
                         result.resolutions.resolutionsPerAuthority[0].values[0].value.name)
-                    result.realValue = result.resolutions.resolutionsPerAuthority[0].values[0].value.name;
+                        result.realValue = result.resolutions.resolutionsPerAuthority[0].values[0].value.name;
+                }
+                // special case when the value is assigned by given db call so no resolution gets generated
+                if (result.realValue === undefined) {
+                    result.realValue = result.value;
                 }
             }
             return result;

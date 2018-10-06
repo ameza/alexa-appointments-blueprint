@@ -24,6 +24,27 @@ export interface WorldlyHelloResponse {
     ssml: string;
 }
 
+export interface ElementRules {
+    name: string;
+    valid: boolean;
+    reason: string;
+}
+
+export interface AvailabilityResponse {
+    elementToFix: ElementRules;
+    message: string;
+    proceedBooking: boolean;
+}
+
+export interface RuleCheckResult {
+    valid: boolean;
+    message: string;
+}
+
+export interface NextAvailable {
+    nextAvailableTime: string;
+    nextAvailableDate: string;
+}
 // elicit
 
 export interface AlexaResponse  {
@@ -48,3 +69,5 @@ export class MatchedSlot implements SlotValue {
     resolutions: Resolutions;
     value: any;
 }
+
+
