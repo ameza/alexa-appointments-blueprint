@@ -1,5 +1,4 @@
 import * as Alexa from "alexa-sdk";
-import {Intent, SlotValue} from "alexa-sdk/index";
 import { MatchedSlot } from "../models";
 
 export class SessionHelper {
@@ -39,5 +38,21 @@ export class SessionHelper {
             }
             return result;
         }
+    }
+
+    static updateSessionValue (handler: Alexa.Handler<Alexa.Request>, intentName: string, slotName: string, value: string): void {
+        console.info("Starting updating session value");
+        let tempSlots = handler.attributes["temp_" + intentName].slots;
+
+        Object.keys(tempSlots).forEach(currentSlot => {
+            if (tempSlots[currentSlot].name === slotName) {
+                console.info(`found slot ${slotName}`);
+                tempSlots[currentSlot].value = value;
+                tempSlots[currentSlot].resolutions = undefined;
+            }
+        }, this);
+
+        handler.attributes["temp_" + intentName].slots = tempSlots;
+        console.info("Done updating session value");
     }
 }

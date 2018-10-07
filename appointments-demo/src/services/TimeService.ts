@@ -1,5 +1,6 @@
 import * as Alexa from "alexa-sdk";
 import * as moment  from "moment";
+import {getEmitOutput} from "ts-loader/dist/types/instances";
 import { SessionHelper, UtilityHelpers} from "../helpers";
 import {AlexaResponse, NextAvailable, Service} from "../models";
 import { AppointmentRequest, ElementRules, RuleCheckResult } from "../models/dto";
@@ -269,7 +270,19 @@ export class TimeService {
     public async nextAvailableAppointment(selDate: string, selAssessor: string, selBranch: string): Promise<NextAvailable> {
         console.info(`trying to determine next available app ${selDate}, ${selAssessor}, ${selBranch}`);
         if (selDate === "" || selDate === undefined) {
-            selDate = moment().format("YYYY-MM-DD");
+            let tempDate = moment();
+
+            // if saturday add 2 days
+            if (tempDate.isoWeekday() === 6 ) {
+                tempDate = moment().add(2, "days");
+
+            }
+            // if sunday add one day
+            if (tempDate.isoWeekday() === 7 ) {
+                tempDate = moment().add(1, "days");
+            }
+            selDate = tempDate.format("YYYY-MM-DD");
+
         }
         let availableHours = await this.getAvailableHours(selDate, selAssessor, selBranch);
         while (availableHours.length === 0) {

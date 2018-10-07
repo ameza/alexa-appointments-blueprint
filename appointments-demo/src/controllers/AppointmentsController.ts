@@ -139,22 +139,108 @@ export class AppointmentsController extends IntentController {
 
     }
 
+    async checkForAny(value: string, slot: string, intentObj: Alexa.Intent): Promise<string> {
+        let result: string = value;
+        console.info(`value for any is: ${value}`);
+
+        // first we try to fetch the next appointment based on what we have
+        let branchSession = SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_BRANCH").realValue;
+        let dateSession = intentObj.slots.SEL_DATE.value;
+        let assessorSession = SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue;
+
+        branchSession = (branchSession && branchSession.toLowerCase() !== "any location") ? branchSession : "";
+        dateSession = (dateSession && dateSession.toLowerCase() !== "any date") ? dateSession : "";
+        assessorSession = (assessorSession && assessorSession.toLowerCase() !== "any doctor") ? assessorSession : "";
+
+
+        // at this point we should have the next appointment based on what we have
+        const nextAppointment: NextAvailable = await this.timeService.nextAvailableAppointment(dateSession, assessorSession, branchSession);
+
+
+        switch (slot) {
+            case "SEL_BRANCH":
+                    if (value.toLowerCase() === "any location") {
+                        // TODO: replace random with best branch for current setings
+                        const randBranch = await this.branchService.branchRepository.findRandom();
+                        console.info(`rand branch is ${randBranch.value}`);
+                        // updating intent
+                        intentObj.slots.SEL_BRANCH.value = randBranch.value;
+                        // updating session
+                        SessionHelper.updateSessionValue(this.handler, intentObj.name, "SEL_BRANCH", randBranch.value);
+                        result = randBranch.value;
+                    }
+                break;
+            case "SEL_ASSESSOR":
+                if (value.toLowerCase() === "any doctor") {
+                    // TODO: replace random with best assessor for current setings
+                    const randAssessor = await this.assessorService.assessorRepository.findRandom();
+                    console.info(`rand assessor is ${randAssessor.value}`);
+                    // updating intent
+                    intentObj.slots.SEL_ASSESSOR.value = randAssessor.value;
+                    // updating session
+                    SessionHelper.updateSessionValue(this.handler, intentObj.name, "SEL_ASSESSOR", randAssessor.value);
+                    result = randAssessor.value;
+                }
+                break;
+
+            case "SEL_DATE":
+                if (value.toLowerCase() === "any date") {
+
+                    const randDate = nextAppointment.nextAvailableDate;
+                    console.info(`rand date is ${randDate}`);
+                    // updating intent
+                    intentObj.slots.SEL_DATE.value = randDate;
+                    // updating session
+                    SessionHelper.updateSessionValue(this.handler, intentObj.name, "SEL_DATE", randDate);
+                    result = randDate;
+                }
+                break;
+
+            case "SEL_TIME":
+                if (value.toLowerCase() === "any time") {
+
+                    const randTime = nextAppointment.nextAvailableTime;
+                    console.info(`rand time is ${randTime}`);
+                    // updating intent
+                    intentObj.slots.SEL_TIME.value = randTime;
+                    // updating session
+                    SessionHelper.updateSessionValue(this.handler, intentObj.name, "SEL_TIME", randTime);
+                    result = randTime;
+                }
+                break;
+            default: {
+                result = value;
+            }
+        }
+        return result;
+    }
+
     async handleBookIntentConfirmation(intentObj: Alexa.Intent): Promise<void> {
         if (intentObj.confirmationStatus !== "CONFIRMED") {
             if (intentObj.confirmationStatus !== "DENIED") {
                 // Intent is not confirmed
 
-                const branchText = SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_BRANCH").realValue;
-                const serviceText = SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_SERVICE").realValue;
-                const assessorText = (SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue === "N/A") ? "" : `with ${SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue}`;
-                const dateText = (intentObj.slots.SEL_DATE.value === "N/A") ? "" : `for ${intentObj.slots.SEL_DATE.value}`;
-                const timeText = (intentObj.slots.SEL_TIME.value === "N/A") ? "" : `at ${ UtilityHelpers.formatTime(intentObj.slots.SEL_TIME.value)} `;
+                // check if elements have any as value and should be populated with a given value
+                const extractedBranch = await this.checkForAny(SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_BRANCH").realValue, "SEL_BRANCH", intentObj);
+                const extractedAssessor = await this.checkForAny(SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_ASSESSOR").realValue, "SEL_ASSESSOR", intentObj);
+                const extractedService =  await this.checkForAny(SessionHelper.getMatchedSlotValue(this.handler, intentObj.name, "SEL_SERVICE").realValue, "SEL_SERVICE", intentObj);
+                const extractedDate =  await this.checkForAny(intentObj.slots.SEL_DATE.value, "SEL_DATE", intentObj);
+                const extractedTime = await this.checkForAny(intentObj.slots.SEL_TIME.value, "SEL_TIME", intentObj);
 
+                // build text sentences for speech purposes
+                const branchText = extractedBranch;
+                const serviceText = extractedService;
+                const assessorText = ( extractedAssessor === "N/A") ? "" : `with ${extractedAssessor}`;
+                const dateText = (extractedDate === "N/A") ? "" : `for ${extractedDate}`;
+                const timeText = (extractedTime === "N/A") ? "" : `at ${UtilityHelpers.formatTime(extractedTime)} `;
+
+                // build alexa output speech
                 const message = `I got a ${serviceText} appointment ${assessorText} ${dateText} ${timeText} on ${branchText}`;
                 const speechOutput = `${message}, ${UtilityHelpers.shouldIbookItHelper()}`;
                 const cardTitle = "Booking Summary";
                 const repromptSpeech = speechOutput;
                 const cardContent = speechOutput;
+
                 console.info(`about to confirm ${intentObj.confirmationStatus} and ${intentObj.slots.TO_FIX.value}`);
                 console.info(`slots before last confirm`);
                 console.info(intentObj.slots);

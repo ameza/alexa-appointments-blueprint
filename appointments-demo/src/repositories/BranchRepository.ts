@@ -13,5 +13,12 @@ export class BranchRepository {
     public async findAll(): Promise<Array<Branch>> {
         return await Branch.findAll<Branch>({where: { enabled : true }, raw: false});
     }
+
+    public async findRandom(): Promise<Branch> {
+        const all = await this.findAll();
+
+        return all[Math.floor(Math.random() * all.length)];
+
+    }
 }
 
